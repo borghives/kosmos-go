@@ -3,7 +3,7 @@ package observer
 import (
 	"context"
 	"fmt"
-	"kosmos/ether"
+	"github.com/borghives/kosmos-go/ether"
 	"log"
 	"net"
 	"net/url"

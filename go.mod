@@ -1,4 +1,4 @@
-module kosmos
+module github.com/borghives/kosmos-go
 
 go 1.26.1
 
