@@ -1,7 +1,6 @@
 package ether
 
 import (
-	"context"
 	"os"
 	"sync"
 
@@ -49,7 +48,7 @@ func (c *Constants) Coalesce() Ether {
 	}
 
 	if projectId != "" {
-		LoadSecrets(context.Background(), &GCPSecretManager{ProjectID: projectId})
+		LoadSecrets(&GCPSecretManager{ProjectID: projectId})
 	}
 
 	viper.BindEnv("ALL_PROXY")

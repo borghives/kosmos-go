@@ -29,9 +29,9 @@ func CollapseSecret(s string) (string, error) {
 	parts := strings.Split(s, ":")
 
 	if len(parts) == 2 {
-		return SummonSecretManager().AccessSecret(context.Background(), parts[0], parts[1])
+		return SummonSecretManager().AccessSecret(parts[0], parts[1])
 	}
-	return SummonSecretManager().AccessSecret(context.Background(), s, "latest")
+	return SummonSecretManager().AccessSecret(s, "latest")
 }
 
 func CollapseSecretSource(s string) (string, error) {
@@ -58,7 +58,7 @@ func CollapseSecretSource(s string) (string, error) {
 	}
 
 	//return the secret
-	secret, err := SummonSecretManager().AccessSecret(context.Background(), parts[1], parts[2])
+	secret, err := SummonSecretManager().AccessSecret(parts[1], parts[2])
 	if err != nil {
 		return "", err
 	}
@@ -70,16 +70,16 @@ func CollapseSecretSource(s string) (string, error) {
 
 // SecretManager is an interface that allows fetching secrets from different backends.
 type SecretManager interface {
-	AccessSecret(ctx context.Context, secretID, versionID string) (string, error)
-	ListSecrets(ctx context.Context) ([]SecretInfo, error)
-	CreateSecret(ctx context.Context, name string) error
-	AddSecretVersion(ctx context.Context, name, payload string) error
-	IsSecretStale(ctx context.Context, name string, ttlHour int) bool
+	AccessSecret(name string, version string) (string, error)
+	ListSecrets() ([]SecretInfo, error)
+	CreateSecret(name string) error
+	AddSecretVersion(name, payload string) error
+	IsSecretStale(name string, ttlHour int) bool
 }
 
 // Load parses a .envsecret file and then loads all the variables found as environment variables.
 // It uses the provided SecretManager to fetch the actual secret value.
-func LoadSecrets(ctx context.Context, manager SecretManager, filenames ...string) error {
+func LoadSecrets(manager SecretManager, filenames ...string) error {
 	if manager == nil {
 		return errors.New("SecretManager is nil")
 	}
@@ -94,7 +94,7 @@ func LoadSecrets(ctx context.Context, manager SecretManager, filenames ...string
 	}
 
 	for _, filename := range filenames {
-		err := loadFile(ctx, manager, filename)
+		err := loadFile(manager, filename)
 		if err != nil {
 			return err
 		}
@@ -114,10 +114,12 @@ type GCPSecretManager struct {
 	ProjectID string
 }
 
-func (m *GCPSecretManager) AccessSecret(ctx context.Context, name string, version string) (string, error) {
+func (m *GCPSecretManager) AccessSecret(name string, version string) (string, error) {
 	if m.ProjectID == "" {
 		return "", errors.New("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
 	}
+
+	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
@@ -143,12 +145,14 @@ type SecretInfo struct {
 	Version string
 }
 
-func (m *GCPSecretManager) ListSecrets(ctx context.Context) ([]SecretInfo, error) {
+func (m *GCPSecretManager) ListSecrets() ([]SecretInfo, error) {
 	projectParent := fmt.Sprintf("projects/%s", m.ProjectID)
 	// 1. Build the request to list secrets
 	req := &secretmanagerpb.ListSecretsRequest{
 		Parent: projectParent,
 	}
+
+	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
@@ -183,7 +187,7 @@ func (m *GCPSecretManager) ListSecrets(ctx context.Context) ([]SecretInfo, error
 	return secrets, nil
 }
 
-func (m *GCPSecretManager) CreateSecret(ctx context.Context, name string) error {
+func (m *GCPSecretManager) CreateSecret(name string) error {
 	projectParent := fmt.Sprintf("projects/%s", m.ProjectID)
 	// 1. Create the Secret (Metadata container)
 	createSecretReq := &secretmanagerpb.CreateSecretRequest{
@@ -198,6 +202,8 @@ func (m *GCPSecretManager) CreateSecret(ctx context.Context, name string) error 
 		},
 	}
 
+	ctx := context.Background()
+
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create secretmanager client: %w", err)
@@ -208,13 +214,15 @@ func (m *GCPSecretManager) CreateSecret(ctx context.Context, name string) error 
 	return err
 }
 
-func (m *GCPSecretManager) AddSecretVersion(ctx context.Context, name, payload string) error {
+func (m *GCPSecretManager) AddSecretVersion(name, payload string) error {
 	addSecretVersionReq := &secretmanagerpb.AddSecretVersionRequest{
 		Parent: fmt.Sprintf("projects/%s/secrets/%s", m.ProjectID, name),
 		Payload: &secretmanagerpb.SecretPayload{
 			Data: []byte(payload),
 		},
 	}
+
+	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
@@ -226,10 +234,12 @@ func (m *GCPSecretManager) AddSecretVersion(ctx context.Context, name, payload s
 	return err
 }
 
-func (m *GCPSecretManager) IsSecretStale(ctx context.Context, name string, ttlHour int) bool {
+func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) bool {
 	req := &secretmanagerpb.GetSecretVersionRequest{
 		Name: fmt.Sprintf("projects/%s/secrets/%s/versions/latest", m.ProjectID, name),
 	}
+
+	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
@@ -253,7 +263,7 @@ func NewLocalKeyring() *LocalKeyring {
 	return &LocalKeyring{}
 }
 
-func (m *LocalKeyring) AccessSecret(ctx context.Context, secretID, versionID string) (string, error) {
+func (m *LocalKeyring) AccessSecret(secretID, versionID string) (string, error) {
 	username := os.Getenv("LOCAL_KEYRING_USERNAME")
 	if username == "" {
 		u, err := user.Current()
@@ -282,7 +292,7 @@ func loadDotenvsecretDisabled() bool {
 	return val == "1" || val == "true" || val == "t" || val == "yes" || val == "y"
 }
 
-func loadFile(ctx context.Context, manager SecretManager, filename string) error {
+func loadFile(manager SecretManager, filename string) error {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return nil
 	}
@@ -319,7 +329,7 @@ func loadFile(ctx context.Context, manager SecretManager, filename string) error
 			}
 
 			// In python version: version_id is "latest", source_id is None by default
-			secretValue, err := manager.AccessSecret(ctx, secretName, versionID)
+			secretValue, err := manager.AccessSecret(secretName, versionID)
 			if err != nil {
 				fmt.Printf("Warning: Failed to load secret '%s' for environment variable '%s': %v\n", secretID, envVar, err)
 				continue
