@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,20 +28,58 @@ const (
 	PurposeAffinityCount //Max Count/Value for PurposeAffinity
 )
 
+func CollapseMongoURISecret(uri string) (string, error) {
+	// 1. Isolate the scheme
+	schemeSplit := strings.SplitN(uri, "://", 2)
+	if len(schemeSplit) != 2 {
+		return "", fmt.Errorf("invalid URI format")
+	}
+	scheme, remainder := schemeSplit[0], schemeSplit[1]
+
+	// 2. Find the end of the credentials (the LAST '@' before any '/' or '?')
+	// This is important because passwords themselves can contain '@' if encoded,
+	// but the delimiter between creds and hosts is the final '@'.
+	endOfCreds := strings.LastIndex(remainder, "@")
+	if endOfCreds == -1 {
+		return uri, nil // No credentials found (unauthenticated connection)
+	}
+
+	creds := remainder[:endOfCreds]
+	hostAndPath := remainder[endOfCreds:] // Includes the '@'
+
+	// 3. Split User and Password
+	userAuth := strings.SplitN(creds, ":", 2)
+	if len(userAuth) < 2 {
+		return uri, nil // Only user, no password
+	}
+
+	user, pass := userAuth[0], userAuth[1]
+
+	if user != "" {
+		fmt.Printf("URI user: %s\n", user)
+	}
+
+	// 4. Translate and Stitch
+	newPass, err := ether.CollapseSecret(pass)
+	if newPass == "" {
+		return "", fmt.Errorf("URI Password is empty %v", err)
+	}
+	return fmt.Sprintf("%s://%s:*****%s", scheme, user, hostAndPath), nil
+}
+
 func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	constants := ether.ColapseObserverConstants()
 	if constants.CmdUri != "" {
-		return ether.CollapseSecret(constants.CmdUri)
+		return CollapseMongoURISecret(constants.CmdUri)
 	}
 
 	switch purpose {
 	case PurposeAffinityObserver:
-		return ether.CollapseSecret(constants.Uri)
+		return CollapseMongoURISecret(constants.Uri)
 	case PurposeAffinityCreator:
-		return ether.CollapseSecret(constants.CreatorUri)
+		return CollapseMongoURISecret(constants.CreatorUri)
 	case PurposeAffinityAdmin:
-		fmt.Printf("Colapse Admin URI: %s\n", constants.AdminUri)
-		return ether.CollapseSecret(constants.AdminUri)
+		return CollapseMongoURISecret(constants.AdminUri)
 	default:
 		return constants.Uri, nil
 	}
@@ -278,8 +317,6 @@ func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, e
 	}
 
 	clientOptions := options.Client().ApplyURI(uri)
-
-	fmt.Printf("URI: %s\n", uri)
 
 	proxyAddress := ether.CollapseConstants().ProxyAddress
 	if proxyAddress != "" {
