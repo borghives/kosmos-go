@@ -185,7 +185,7 @@ func (m *MongoObserver) Close() {
 	}
 }
 
-func (m *MongoObserver) QueryMembers() (*MembersInfoResponse, error) {
+func (m *MongoObserver) ListMembers() (*MembersInfoResponse, error) {
 	usersInfoCmd := bson.D{kv("usersInfo", 1)}
 
 	var result MembersInfoResponse

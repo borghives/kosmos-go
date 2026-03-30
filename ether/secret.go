@@ -12,6 +12,7 @@ import (
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+	"google.golang.org/api/iterator"
 
 	"github.com/zalando/go-keyring"
 )
@@ -96,7 +97,7 @@ type GCPSecretManager struct {
 	ProjectID string
 }
 
-func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID string) (string, error) {
+func (m *GCPSecretManager) AccessSecret(ctx context.Context, name string, version string) (string, error) {
 	if m.ProjectID == "" {
 		return "", errors.New("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
 	}
@@ -107,9 +108,9 @@ func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID
 	}
 	defer client.Close()
 
-	name := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", m.ProjectID, secretID, versionID)
+	location := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", m.ProjectID, name, version)
 	req := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: name,
+		Name: location,
 	}
 
 	result, err := client.AccessSecretVersion(ctx, req)
@@ -118,6 +119,94 @@ func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID
 	}
 
 	return string(result.Payload.Data), nil
+}
+
+type SecretInfo struct {
+	Name    string
+	Version string
+}
+
+func (m *GCPSecretManager) ListSecrets(ctx context.Context) ([]SecretInfo, error) {
+	projectParent := fmt.Sprintf("projects/%s", m.ProjectID)
+	// 1. Build the request to list secrets
+	req := &secretmanagerpb.ListSecretsRequest{
+		Parent: projectParent,
+	}
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secretmanager client: %w", err)
+	}
+	defer client.Close()
+
+	var secrets []SecretInfo
+	iter := client.ListSecrets(ctx, req)
+	for {
+		secret, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to list secrets: %w", err)
+		}
+		secretParts := strings.Split(secret.Name, "/")
+
+		if len(secretParts) < 4 {
+			return nil, fmt.Errorf("failed to list secrets: %s", secret.Name)
+		}
+		name := secretParts[3]
+		var version string
+		if len(secretParts) > 4 {
+			version = secretParts[4]
+		}
+
+		secrets = append(secrets, SecretInfo{Name: name, Version: version})
+	}
+
+	return secrets, nil
+}
+
+func (m *GCPSecretManager) CreateSecret(ctx context.Context, name string) error {
+	projectParent := fmt.Sprintf("projects/%s", m.ProjectID)
+	// 1. Create the Secret (Metadata container)
+	createSecretReq := &secretmanagerpb.CreateSecretRequest{
+		Parent:   projectParent,
+		SecretId: name,
+		Secret: &secretmanagerpb.Secret{
+			Replication: &secretmanagerpb.Replication{
+				Replication: &secretmanagerpb.Replication_Automatic_{
+					Automatic: &secretmanagerpb.Replication_Automatic{},
+				},
+			},
+		},
+	}
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create secretmanager client: %w", err)
+	}
+	defer client.Close()
+
+	_, err = client.CreateSecret(ctx, createSecretReq)
+	return err
+}
+
+func (m *GCPSecretManager) AddSecretVersion(ctx context.Context, name, payload string) error {
+	addSecretVersionReq := &secretmanagerpb.AddSecretVersionRequest{
+		Parent: fmt.Sprintf("projects/%s/secrets/%s", m.ProjectID, name),
+		Payload: &secretmanagerpb.SecretPayload{
+			Data: []byte(payload),
+		},
+	}
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create secretmanager client: %w", err)
+	}
+	defer client.Close()
+
+	_, err = client.AddSecretVersion(ctx, addSecretVersionReq)
+	return err
 }
 
 type LocalKeyring struct{}
