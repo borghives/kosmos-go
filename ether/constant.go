@@ -2,6 +2,7 @@ package ether
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 
@@ -65,6 +66,7 @@ func (c *Constants) MergeFromFile(filename string) Ether {
 	viper.SetConfigFile(filename)
 	_ = viper.MergeInConfig()
 	viper.Unmarshal(c)
+	fmt.Printf("Merge From File after Project ID: %s\n", c.ProjectID)
 	return c
 }
 
