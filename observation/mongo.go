@@ -201,8 +201,12 @@ func (m *mongoDialerWrapper) DialContext(ctx context.Context, network, addr stri
 	return m.dialer.Dial(network, addr)
 }
 
+func (m *MongoObserver) Database(name string) *mongo.Database {
+	return m.Client().Database(name)
+}
+
 func (m *MongoObserver) runAdministrativeCommand(cmd bson.D) *mongo.SingleResult {
-	return m.Client().Database("admin").RunCommand(context.Background(), cmd)
+	return m.Database("admin").RunCommand(context.Background(), cmd)
 }
 
 func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, error) {
