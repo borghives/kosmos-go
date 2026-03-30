@@ -60,11 +60,14 @@ func CollapseMongoURISecret(uri string) (string, error) {
 	}
 
 	// 4. Translate and Stitch
-	newPass, err := ether.CollapseSecret(pass)
-	if newPass == "" {
-		return "", fmt.Errorf("URI Password is empty %v", err)
+	var err error
+	if ether.IsSecretSource(pass) {
+		pass, err = ether.CollapseSecret(pass)
+		if err != nil {
+			return "", err
+		}
 	}
-	return fmt.Sprintf("%s://%s:*****%s", scheme, user, hostAndPath), nil
+	return fmt.Sprintf("%s://%s:%s%s", scheme, user, pass, hostAndPath), nil
 }
 
 func CollapseURIFor(purpose PurposeAffinity) (string, error) {

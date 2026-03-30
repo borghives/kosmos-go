@@ -44,7 +44,14 @@ func CollapseSecret(s string) (string, error) {
 	}
 
 	//return the secret
-	return SummonSecretManager().AccessSecret(context.Background(), parts[1], parts[2])
+	secret, err := SummonSecretManager().AccessSecret(context.Background(), parts[1], parts[2])
+	if err != nil {
+		return "", err
+	}
+	if secret == "" {
+		return "", fmt.Errorf("Secret from Secret Manager is empty")
+	}
+	return secret, nil
 }
 
 // SecretManager is an interface that allows fetching secrets from different backends.
