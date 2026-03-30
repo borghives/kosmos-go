@@ -9,13 +9,11 @@ import (
 	"github.com/borghives/kosmos-go/observer"
 )
 
-type SecretSource string
-
-func IsSecretSource(s SecretSource) bool {
+func IsSecretSource(s string) bool {
 	return strings.HasPrefix(string(s), "__secret:") && strings.HasSuffix(string(s), "__")
 }
 
-func CollapseSecret(s SecretSource) (string, error) {
+func CollapseSecret(s string) (string, error) {
 	//parse string "__secret:name:version__"
 
 	//check if the string is a holder string
@@ -23,12 +21,11 @@ func CollapseSecret(s SecretSource) (string, error) {
 		return "", fmt.Errorf("Not a secret source string")
 	}
 
-	sStr := string(s)
 	//remove the underscores
-	sStr = sStr[2 : len(sStr)-2]
+	s = s[2 : len(s)-2]
 
 	//split the string by ":"
-	parts := strings.Split(sStr, ":")
+	parts := strings.Split(s, ":")
 
 	//check if the string is a source string
 	if len(parts) != 3 {
