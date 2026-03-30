@@ -71,6 +71,10 @@ func CollapseSecretSource(s string) (string, error) {
 // SecretManager is an interface that allows fetching secrets from different backends.
 type SecretManager interface {
 	AccessSecret(ctx context.Context, secretID, versionID string) (string, error)
+	ListSecrets(ctx context.Context) ([]SecretInfo, error)
+	CreateSecret(ctx context.Context, name string) error
+	AddSecretVersion(ctx context.Context, name, payload string) error
+	IsSecretStale(ctx context.Context, name string, ttlHour int) bool
 }
 
 // Load parses a .envsecret file and then loads all the variables found as environment variables.
