@@ -97,7 +97,7 @@ var (
 	mongoObserversOnce [PurposeAffinityCount]sync.Once
 )
 
-func CoalesceMongoObserver(purpose PurposeAffinity) *MongoObserver {
+func SummonMongo(purpose PurposeAffinity) *MongoObserver {
 	mongoObserversOnce[purpose].Do(func() {
 		clientOptions, err := coalesceMongoOptionsFor(purpose)
 		if err != nil {
