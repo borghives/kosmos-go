@@ -76,5 +76,6 @@ func (c *Constants) MergeFromCmd(cmd *cobra.Command) Ether {
 	}
 
 	viper.Unmarshal(c)
+	fmt.Printf("Merge From Cmd after Project ID: %s\n", c.ProjectID)
 	return c
 }
