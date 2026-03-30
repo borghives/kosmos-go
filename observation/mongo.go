@@ -39,6 +39,7 @@ func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	case PurposeAffinityCreator:
 		return ether.CollapseSecret(constants.CreatorUri)
 	case PurposeAffinityAdmin:
+		fmt.Printf("Colapse Admin URI: %s\n", constants.AdminUri)
 		return ether.CollapseSecret(constants.AdminUri)
 	default:
 		return constants.Uri, nil
@@ -105,7 +106,7 @@ func SummonMongo(purpose PurposeAffinity) *MongoObserver {
 	mongoObserversOnce[purpose].Do(func() {
 		clientOptions, err := coalesceMongoOptionsFor(purpose)
 		if err != nil {
-			log.Fatalf("Failed to coalesce mongo options: %v", err)
+			log.Fatalf("Failed to coalesce mongo options for purpose %v: %v", purpose, err)
 		}
 		mongoObservers[purpose] = &MongoObserver{clientOption: clientOptions, purpose: purpose}
 	})
