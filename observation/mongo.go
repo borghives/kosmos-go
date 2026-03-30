@@ -1,4 +1,4 @@
-package observer
+package observation
 
 import (
 	"context"
@@ -57,23 +57,23 @@ type MongoRole struct {
 	DB   string `bson:"db"`
 }
 
-type MongoUser struct {
+type MongoMember struct {
 	User  string      `bson:"user"`
 	Roles []MongoRole `bson:"roles"`
 }
 
-type UsersInfoResponse struct {
-	Users []MongoUser `bson:"users"`
+type MembersInfoResponse struct {
+	Users []MongoMember `bson:"users"`
 }
 
-type UserResponsibility struct {
+type MemberResponsibility struct {
 	ReadDbs      []string
 	ReadWriteDbs []string
 	CreatorDbs   []string
 	IsAdmin      bool
 }
 
-func (r *UserResponsibility) ToMongoRoles() []MongoRole {
+func (r *MemberResponsibility) ToMongoRoles() []MongoRole {
 	var roles []MongoRole
 	for _, db := range r.ReadDbs {
 		roles = append(roles, MongoRole{Role: "read", DB: db})
@@ -138,10 +138,10 @@ func (m *MongoObserver) Close() {
 	}
 }
 
-func (m *MongoObserver) QueryMembers() (*UsersInfoResponse, error) {
+func (m *MongoObserver) QueryMembers() (*MembersInfoResponse, error) {
 	usersInfoCmd := bson.D{kv("usersInfo", 1)}
 
-	var result UsersInfoResponse
+	var result MembersInfoResponse
 	err := m.runAdministrativeCommand(usersInfoCmd).Decode(&result)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (m *MongoObserver) RemoveMember(name string) error {
 	return nil
 }
 
-func (m *MongoObserver) UpdateMember(name string, newPassword string, responsibility UserResponsibility, upsert bool) error {
+func (m *MongoObserver) UpdateMember(name string, newPassword string, responsibility MemberResponsibility, upsert bool) error {
 	if newPassword == "" {
 		return fmt.Errorf("Cannot set empty password\n")
 	}

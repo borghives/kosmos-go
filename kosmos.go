@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/borghives/kosmos-go/ether"
-	"github.com/borghives/kosmos-go/observer"
+	"github.com/borghives/kosmos-go/observation"
 )
 
 func IsSecretSource(s string) bool {
@@ -40,6 +40,6 @@ func CollapseSecret(s string) (string, error) {
 	return ether.SummonSecretManager().AccessSecret(context.Background(), parts[1], parts[2])
 }
 
-func SummonObserverFor(purpose observer.PurposeAffinity) *observer.MongoObserver {
-	return observer.SummonMongo(purpose)
+func SummonObserverFor(purpose observation.PurposeAffinity) *observation.MongoObserver {
+	return observation.SummonMongo(purpose)
 }
