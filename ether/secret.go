@@ -90,12 +90,7 @@ type GCPSecretManager struct {
 }
 
 func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID string) (string, error) {
-
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if projectID == "" {
-		projectID = os.Getenv("PROJECT_ID")
-	}
-	if projectID == "" {
+	if m.ProjectID == "" {
 		return "", errors.New("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
 	}
 
@@ -105,7 +100,7 @@ func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID
 	}
 	defer client.Close()
 
-	name := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", projectID, secretID, versionID)
+	name := fmt.Sprintf("projects/%s/secrets/%s/versions/%s", m.ProjectID, secretID, versionID)
 	req := &secretmanagerpb.AccessSecretVersionRequest{
 		Name: name,
 	}
