@@ -188,6 +188,63 @@ func (m *MongoObserver) UpdateMember(name string, newPassword string, responsibi
 	return nil
 }
 
+// RSStatus defines the top-level response from replSetGetStatus
+type RSStatus struct {
+	Set     string   `bson:"set"`
+	Members []Member `bson:"members"`
+}
+
+// Member defines the individual node status in the replica set
+type Member struct {
+	Name           string    `bson:"name"`
+	StateStr       string    `bson:"stateStr"`
+	OptimeDate     time.Time `bson:"optimeDate"`
+	SyncSourceHost string    `bson:"syncSourceHost"`
+	Health         int       `bson:"health"` // 1 for up, 0 for down
+}
+
+type ServerStatus struct {
+	Uptime      int64 `bson:"uptime"`
+	Connections struct {
+		Current   int `bson:"current"`
+		Available int `bson:"available"`
+	} `bson:"connections"`
+	Opcounters struct {
+		Insert  int64 `bson:"insert"`
+		Query   int64 `bson:"query"`
+		Update  int64 `bson:"update"`
+		Delete  int64 `bson:"delete"`
+		Command int64 `bson:"command"`
+	} `bson:"opcounters"`
+	Mem struct {
+		Resident int64 `bson:"resident"` // in MB
+		Virtual  int64 `bson:"virtual"`
+	} `bson:"mem"`
+}
+
+type MongoStatus struct {
+	RSStatus     RSStatus
+	ServerStatus ServerStatus
+}
+
+func (m *MongoObserver) Status() (*MongoStatus, error) {
+	var status MongoStatus
+	err := m.runAdministrativeCommand(bson.D{kv("replSetGetStatus", 1)}).Decode(&status.RSStatus)
+	if err != nil {
+		return nil, err
+	}
+	err = m.runAdministrativeCommand(bson.D{kv("serverStatus", 1)}).Decode(&status.ServerStatus)
+	if err != nil {
+		return nil, err
+	}
+	return &status, nil
+}
+
+func (m *MongoObserver) ReelectPrimary() error {
+	return m.runAdministrativeCommand(bson.D{kv("replSetStepDown", 60)}).Err()
+
+}
+
 type mongoDialerWrapper struct {
 	dialer proxy.Dialer
 }
