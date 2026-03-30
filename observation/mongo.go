@@ -27,17 +27,21 @@ const (
 	PurposeAffinityCount //Max Count/Value for PurposeAffinity
 )
 
-func CollapseURIFor(purpose PurposeAffinity) string {
+func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	constants := ether.ColapseObserverConstants()
+	if constants.CmdUri != "" {
+		return ether.CollapseSecret(constants.CmdUri)
+	}
+
 	switch purpose {
 	case PurposeAffinityObserver:
-		return constants.Uri
+		return ether.CollapseSecret(constants.Uri)
 	case PurposeAffinityCreator:
-		return constants.CreatorUri
+		return ether.CollapseSecret(constants.CreatorUri)
 	case PurposeAffinityAdmin:
-		return constants.AdminUri
+		return ether.CollapseSecret(constants.AdminUri)
 	default:
-		return constants.Uri
+		return constants.Uri, nil
 	}
 }
 
@@ -267,11 +271,14 @@ func (m *MongoObserver) runAdministrativeCommand(cmd bson.D) *mongo.SingleResult
 }
 
 func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, error) {
-	clientOptions := options.Client().ApplyURI(
-		CollapseURIFor(purpose),
-	)
+	uri, err := CollapseURIFor(purpose)
+	if err != nil {
+		return nil, err
+	}
 
-	fmt.Printf("URI: %s\n", CollapseURIFor(purpose))
+	clientOptions := options.Client().ApplyURI(uri)
+
+	fmt.Printf("URI: %s\n", uri)
 
 	proxyAddress := ether.CollapseConstants().ProxyAddress
 	if proxyAddress != "" {
@@ -303,7 +310,7 @@ func tryConnectMongo(clientOptions *options.ClientOptions, n int) (*mongo.Client
 			log.Printf("MongoDb Ping Success")
 			return client, nil
 		}
-		log.Printf("MongoDb Ping Failed.  Waiting for MongoDB... (attempt %d): %v, %v", i+1, err, clientOptions)
+		log.Printf("MongoDb Ping Failed.  Waiting for MongoDB... (attempt %d): %v", i+1, err)
 		time.Sleep(5 * time.Second)
 	}
 
