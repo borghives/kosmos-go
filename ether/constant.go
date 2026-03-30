@@ -69,5 +69,10 @@ func (c *Constants) MergeFromFile(filename string) Ether {
 }
 
 func (c *Constants) MergeFromCmd(cmd *cobra.Command) Ether {
+	if flag := cmd.Flags().Lookup("project"); flag != nil {
+		viper.BindPFlag("PROJECT_ID", flag)
+	}
+
+	viper.Unmarshal(c)
 	return c
 }

@@ -46,5 +46,10 @@ func (c *MongoObserverConstants) MergeFromFile(filename string) Ether {
 }
 
 func (c *MongoObserverConstants) MergeFromCmd(cmd *cobra.Command) Ether {
+	if flag := cmd.Flags().Lookup("uri"); flag != nil {
+		viper.BindPFlag("MONGODB_URI", flag)
+		c.CmdUri = flag.Value.String()
+	}
+	viper.Unmarshal(c)
 	return c
 }
