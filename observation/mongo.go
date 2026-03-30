@@ -271,6 +271,8 @@ func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, e
 		CollapseURIFor(purpose),
 	)
 
+	fmt.Printf("URI: %s\n", CollapseURIFor(purpose))
+
 	proxyAddress := ether.CollapseConstants().ProxyAddress
 	if proxyAddress != "" {
 		log.Println("Using proxy for MongoDB: ", proxyAddress)
@@ -301,7 +303,7 @@ func tryConnectMongo(clientOptions *options.ClientOptions, n int) (*mongo.Client
 			log.Printf("MongoDb Ping Success")
 			return client, nil
 		}
-		log.Printf("MongoDb Ping Failed.  Waiting for MongoDB... (attempt %d): %v", i+1, err)
+		log.Printf("MongoDb Ping Failed.  Waiting for MongoDB... (attempt %d): %v, %v", i+1, err, clientOptions)
 		time.Sleep(5 * time.Second)
 	}
 
