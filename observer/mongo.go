@@ -3,18 +3,43 @@ package observer
 import (
 	"context"
 	"fmt"
-	"github.com/borghives/kosmos-go/ether"
 	"log"
 	"net"
 	"net/url"
 	"sync"
 	"time"
 
+	"github.com/borghives/kosmos-go/ether"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/net/proxy"
 )
+
+type PurposeAffinity int
+
+const (
+	PurposeAffinityUnknown PurposeAffinity = iota
+	PurposeAffinityObserver
+	PurposeAffinityCreator
+	PurposeAffinityAdmin
+	PurposeAffinityCount //Max Count/Value for PurposeAffinity
+)
+
+func CollapseURIFor(purpose PurposeAffinity) string {
+	constants := ether.ColapseObserverConstants()
+	switch purpose {
+	case PurposeAffinityObserver:
+		return constants.Uri
+	case PurposeAffinityCreator:
+		return constants.CreatorUri
+	case PurposeAffinityAdmin:
+		return constants.AdminUri
+	default:
+		return constants.Uri
+	}
+}
 
 // key value element shorthand
 func kv(key string, value any) bson.E {
@@ -24,7 +49,7 @@ func kv(key string, value any) bson.E {
 type MongoObserver struct {
 	clientOption *options.ClientOptions
 	client       *mongo.Client
-	purpose      ether.PurposeAffinity
+	purpose      PurposeAffinity
 }
 
 type MongoRole struct {
@@ -68,11 +93,11 @@ func (r *UserResponsibility) ToMongoRoles() []MongoRole {
 }
 
 var (
-	mongoObservers     [ether.PurposeAffinityCount]*MongoObserver
-	mongoObserversOnce [ether.PurposeAffinityCount]sync.Once
+	mongoObservers     [PurposeAffinityCount]*MongoObserver
+	mongoObserversOnce [PurposeAffinityCount]sync.Once
 )
 
-func CoalesceMongoObserver(purpose ether.PurposeAffinity) *MongoObserver {
+func CoalesceMongoObserver(purpose PurposeAffinity) *MongoObserver {
 	mongoObserversOnce[purpose].Do(func() {
 		clientOptions, err := coalesceMongoOptionsFor(purpose)
 		if err != nil {
@@ -180,13 +205,12 @@ func (m *MongoObserver) runAdministrativeCommand(cmd bson.D) *mongo.SingleResult
 	return m.Client().Database("admin").RunCommand(context.Background(), cmd)
 }
 
-func coalesceMongoOptionsFor(purpose ether.PurposeAffinity) (*options.ClientOptions, error) {
-	constants := ether.ColapseObserverConstants()
+func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, error) {
 	clientOptions := options.Client().ApplyURI(
-		constants.GetURI(purpose),
+		CollapseURIFor(purpose),
 	)
 
-	proxyAddress := ether.ColapseConstants().ProxyAddress
+	proxyAddress := ether.CollapseConstants().ProxyAddress
 	if proxyAddress != "" {
 		log.Println("Using proxy for MongoDB: ", proxyAddress)
 		proxyUrl, err := url.Parse(proxyAddress)

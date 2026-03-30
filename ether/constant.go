@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	constants   *Constants
-	colapseOnce sync.Once
+	constants    *Constants
+	collapseOnce sync.Once
 )
 
-func ColapseConstants() *Constants {
-	colapseOnce.Do(func() {
+func CollapseConstants() *Constants {
+	collapseOnce.Do(func() {
 		constants = &Constants{}
 		constants.Coalesce()
 	})
@@ -49,7 +49,7 @@ func (c *Constants) Coalesce() Ether {
 	}
 
 	if projectId != "" {
-		LoadSecrets(context.Background(), SummonGCPSecretManager(projectId))
+		LoadSecrets(context.Background(), &GCPSecretManager{ProjectID: projectId})
 	}
 
 	viper.BindEnv("ALL_PROXY")

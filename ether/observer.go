@@ -12,16 +12,6 @@ var (
 	mongoObserverOnce      sync.Once
 )
 
-type PurposeAffinity int
-
-const (
-	PurposeAffinityUnknown PurposeAffinity = iota
-	PurposeAffinityObserver
-	PurposeAffinityCreator
-	PurposeAffinityAdmin
-	PurposeAffinityCount //Max Count/Value for PurposeAffinity
-)
-
 func ColapseObserverConstants() *MongoObserverConstants {
 	mongoObserverOnce.Do(func() {
 		mongoObserverConstants = &MongoObserverConstants{}
@@ -57,17 +47,4 @@ func (c *MongoObserverConstants) MergeFromFile(filename string) Ether {
 
 func (c *MongoObserverConstants) MergeFromCmd(cmd *cobra.Command) Ether {
 	return c
-}
-
-func (c *MongoObserverConstants) GetURI(purpose PurposeAffinity) string {
-	switch purpose {
-	case PurposeAffinityObserver:
-		return c.Uri
-	case PurposeAffinityCreator:
-		return c.CreatorUri
-	case PurposeAffinityAdmin:
-		return c.AdminUri
-	default:
-		return c.Uri
-	}
 }

@@ -45,15 +45,50 @@ func LoadSecrets(ctx context.Context, manager SecretManager, filenames ...string
 	return nil
 }
 
-type GCPSecretManager struct {
-	ProjectID string
+type SecretSource string
+
+func IsSecretSource(s SecretSource) bool {
+	return strings.HasPrefix(string(s), "__secret:") && strings.HasSuffix(string(s), "__")
 }
 
-func SummonGCPSecretManager(projectID string) SecretManager {
-	if projectID == "" {
-		return nil
+func CollapseSecret(s SecretSource) (string, error) {
+	//parse string "__secret:name:version__"
+
+	//check if the string is a holder string
+	if !IsSecretSource(s) {
+		return "", fmt.Errorf("Not a secret source string")
 	}
-	return &GCPSecretManager{ProjectID: projectID}
+
+	sStr := string(s)
+	//remove the underscores
+	sStr = sStr[2 : len(sStr)-2]
+
+	//split the string by ":"
+	parts := strings.Split(sStr, ":")
+
+	//check if the string is a source string
+	if len(parts) != 3 {
+		return "", fmt.Errorf("Invalid secret source string format expect __secret:<name>:<version>__")
+	}
+
+	if parts[0] != "secret" {
+		return "", fmt.Errorf("Invalid secret source string format expect __secret:<name>:<version>__")
+	}
+
+	//return the secret
+	return SummonSecretManager().AccessSecret(context.Background(), parts[1], parts[2])
+}
+
+func SummonSecretManager() SecretManager {
+	constants := CollapseConstants()
+	if constants.ProjectID == "" {
+		log.Fatalf("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
+	}
+	return &GCPSecretManager{ProjectID: constants.ProjectID}
+}
+
+type GCPSecretManager struct {
+	ProjectID string
 }
 
 func (m *GCPSecretManager) AccessSecret(ctx context.Context, secretID, versionID string) (string, error) {
