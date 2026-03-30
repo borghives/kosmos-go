@@ -13,6 +13,10 @@ func CollapseSecret(s string) (string, error) {
 	return ether.CollapseSecret(s)
 }
 
+func SummonSecretManager() ether.SecretManager {
+	return ether.SummonSecretManager()
+}
+
 func SummonObserverFor(purpose observation.PurposeAffinity) *observation.MongoObserver {
 	return observation.SummonMongo(purpose)
 }

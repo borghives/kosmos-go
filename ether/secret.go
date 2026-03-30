@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/user"
 	"strings"
+	"time"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
@@ -22,6 +23,18 @@ func IsSecretSource(s string) bool {
 }
 
 func CollapseSecret(s string) (string, error) {
+	if IsSecretSource(s) {
+		return CollapseSecretSource(s)
+	}
+	parts := strings.Split(s, ":")
+
+	if len(parts) == 2 {
+		return SummonSecretManager().AccessSecret(context.Background(), parts[0], parts[1])
+	}
+	return SummonSecretManager().AccessSecret(context.Background(), s, "latest")
+}
+
+func CollapseSecretSource(s string) (string, error) {
 	//parse string "__secret:name:version__"
 
 	//check if the string is a holder string
@@ -207,6 +220,27 @@ func (m *GCPSecretManager) AddSecretVersion(ctx context.Context, name, payload s
 
 	_, err = client.AddSecretVersion(ctx, addSecretVersionReq)
 	return err
+}
+
+func (m *GCPSecretManager) IsSecretStale(ctx context.Context, name string, ttlHour int) bool {
+	req := &secretmanagerpb.GetSecretVersionRequest{
+		Name: fmt.Sprintf("projects/%s/secrets/%s/versions/latest", m.ProjectID, name),
+	}
+
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		log.Printf("failed to create secretmanager client: %v", err)
+		return false
+	}
+	defer client.Close()
+
+	version, err := client.GetSecretVersion(ctx, req)
+	if err != nil {
+		log.Printf("failed to get secret version: %v", err)
+		return false
+	}
+
+	return version.CreateTime.AsTime().Before(time.Now().Add(-time.Duration(ttlHour) * time.Hour))
 }
 
 type LocalKeyring struct{}

@@ -62,7 +62,7 @@ func CollapseMongoURISecret(uri string) (string, error) {
 	// 4. Translate and Stitch
 	var err error
 	if ether.IsSecretSource(pass) {
-		pass, err = ether.CollapseSecret(pass)
+		pass, err = ether.CollapseSecretSource(pass)
 		if err != nil {
 			return "", err
 		}
