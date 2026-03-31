@@ -1,4 +1,4 @@
-package kmodel
+package model
 
 import (
 	"encoding/json"

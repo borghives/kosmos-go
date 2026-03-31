@@ -1,23 +1,20 @@
-package kmodel
+package kosmos
 
 import (
 	"reflect"
 	"time"
 
-	"github.com/borghives/kosmos-go/kmodel/operator"
+	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/model/operator"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type Meta struct {
+type ModelMetadata struct {
 	CollectionName string
 	DatabaseName   string
 }
 
-func (e Meta) IsValid() bool {
-	return e.CollectionName != "" && e.DatabaseName != ""
-}
-
-func (e *Meta) NormalizeDocument(document bson.D) bson.D {
+func (e *ModelMetadata) NormalizeDocument(document bson.D) bson.D {
 	newD := bson.D{}
 	for _, v := range document {
 		if _, ok := v.Value.(operator.Expression); ok {
@@ -29,7 +26,7 @@ func (e *Meta) NormalizeDocument(document bson.D) bson.D {
 	return newD
 }
 
-func (e *Meta) NormalizeArray(array bson.A) bson.A {
+func (e *ModelMetadata) NormalizeArray(array bson.A) bson.A {
 	newA := bson.A{}
 	for _, v := range array {
 		if _, ok := v.(operator.Expression); ok {
@@ -41,7 +38,7 @@ func (e *Meta) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *Meta) NormalizeExpression(expression operator.Expression) any {
+func (e *ModelMetadata) NormalizeExpression(expression operator.Expression) any {
 	rep := expression.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
@@ -52,20 +49,20 @@ func (e *Meta) NormalizeExpression(expression operator.Expression) any {
 	return rep
 }
 
-type Entity interface {
+type Model interface {
 	CollapseID() bool
 	IsEntangled() bool
-	GetMeta() Meta
+	GetMetadata() ModelMetadata
 }
 
-type EntityBase struct {
-	// EntityModelMeta  entitymodel.Meta `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
+type BaseModel struct {
+	// KModelMetadata  kosmos.ModelMetadata `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
 }
 
-func (e *EntityBase) CollapseID() {
+func (e *BaseModel) CollapseID() {
 	if e.ID.IsZero() {
 		e.ID = bson.NewObjectID()
 		e.CreatedTime = time.Now()
@@ -73,30 +70,34 @@ func (e *EntityBase) CollapseID() {
 	e.UpdatedTime = time.Now()
 }
 
-func (e *EntityBase) IsEntangled() bool {
+func (e *BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func (e *EntityBase) GetEntityType() Meta {
-	field, found := reflect.TypeOf(e).Elem().FieldByName("EntityModelMeta")
+func (e *BaseModel) GetMetadata() ModelMetadata {
+	field, found := reflect.TypeOf(e).Elem().FieldByName("ModelMetadata")
 	if !found {
-		panic("EntityType not found")
+		panic("ModelMetadata not found")
 	}
 
-	return Meta{
+	return ModelMetadata{
 		DatabaseName:   field.Tag.Get("db"),
 		CollectionName: field.Tag.Get("collection"),
 	}
 }
 
-func Filter[T Entity](filter QueryPredicate) *EntityRecord[T] {
+func Filter[T Model](filter model.QueryPredicate) *EntityRecord[T] {
 	return All[T]().Filter(filter)
 }
 
-func All[T Entity]() *EntityRecord[T] {
+func All[T Model]() *EntityRecord[T] {
 	var template T
 	recording := &EntityRecord[T]{
-		Type: template.GetMeta(),
+		Type: template.GetMetadata(),
 	}
 	return recording
+}
+
+func kv(key string, value any) bson.E {
+	return bson.E{Key: key, Value: value}
 }

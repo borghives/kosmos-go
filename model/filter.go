@@ -1,7 +1,7 @@
-package kmodel
+package model
 
 import (
-	"github.com/borghives/kosmos-go/kmodel/operator"
+	"github.com/borghives/kosmos-go/model/operator"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -14,23 +14,23 @@ func (q QueryPredicate) ToRepr() any {
 	return bson.D{kv(q.FieldName.Name, q.Expression.ToRepr())}
 }
 
-// --- Field ---
-type QueryableField struct {
+// --- Fld ---
+type Fld struct {
 	Name string
 }
 
-func (q QueryableField) WrapName() *operator.FieldName {
+func (q Fld) wrapFieldName() *operator.FieldName {
 	return &operator.FieldName{Name: q.Name}
 }
 
-func (q QueryableField) ToQueryPredicate(queryOp operator.QueryOpExpression) QueryPredicate {
+func (q Fld) ToQueryPredicate(queryOp operator.QueryOpExpression) QueryPredicate {
 	return QueryPredicate{
-		FieldName:  q.WrapName(),
+		FieldName:  q.wrapFieldName(),
 		Expression: queryOp,
 	}
 }
 
-func (q QueryableField) LiteralSlice(values []any) []operator.LiteralValue {
+func (q Fld) LiteralSlice(values []any) []operator.LiteralValue {
 	literals := make([]operator.LiteralValue, len(values))
 	for i, v := range values {
 		literals[i] = q.Literal(v)
@@ -38,7 +38,7 @@ func (q QueryableField) LiteralSlice(values []any) []operator.LiteralValue {
 	return literals
 }
 
-func (q QueryableField) Literal(value any) operator.LiteralValue {
+func (q Fld) Literal(value any) operator.LiteralValue {
 
 	return operator.LiteralValue{
 		Value: value,
@@ -46,7 +46,7 @@ func (q QueryableField) Literal(value any) operator.LiteralValue {
 	}
 }
 
-func (q QueryableField) Eq(value any) QueryPredicate {
+func (q Fld) Eq(value any) QueryPredicate {
 	litValue := q.Literal(value)
 	return q.ToQueryPredicate(operator.Eq(litValue))
 }
