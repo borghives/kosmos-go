@@ -50,24 +50,25 @@ func (e *ModelMeta) NormalizeExpression(expression operator.Expression) any {
 }
 
 type Model interface {
-	CollapseID() bool
+	CollapseID() bson.ObjectID
 	IsEntangled() bool
 	GetMetadata() ModelMeta
 }
 
 type BaseModel struct {
-	// KMMeta  kosmos.ModelMetadata `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
+	// KMMeta  kosmos.ModelMeta `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
 }
 
-func (e *BaseModel) CollapseID() {
+func (e *BaseModel) CollapseID() bson.ObjectID {
 	if e.ID.IsZero() {
 		e.ID = bson.NewObjectID()
 		e.CreatedTime = time.Now()
 	}
 	e.UpdatedTime = time.Now()
+	return e.ID
 }
 
 func (e *BaseModel) IsEntangled() bool {
@@ -81,8 +82,8 @@ func (e *BaseModel) GetMetadata() ModelMeta {
 	}
 
 	return ModelMeta{
-		DatabaseName:   field.Tag.Get("db"),
-		CollectionName: field.Tag.Get("collection"),
+		DatabaseName:   field.Tag.Get("kdb"),
+		CollectionName: field.Tag.Get("kcol"),
 	}
 }
 
