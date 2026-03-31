@@ -1,18 +1,23 @@
 package entitymodel
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/borghives/kosmos-go/entitymodel/operator"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type EntityType struct {
-	Collection *mongo.Collection
+type EntityObservation struct {
+	CollectionName string
+	DatabaseName   string
 }
 
-func (e *EntityType) NormalizeDocument(document bson.D) bson.D {
+func (e EntityObservation) IsValid() bool {
+	return e.CollectionName != "" && e.DatabaseName != ""
+}
+
+func (e *EntityObservation) NormalizeDocument(document bson.D) bson.D {
 	newD := bson.D{}
 	for _, v := range document {
 		if _, ok := v.Value.(operator.Expression); ok {
@@ -24,7 +29,7 @@ func (e *EntityType) NormalizeDocument(document bson.D) bson.D {
 	return newD
 }
 
-func (e *EntityType) NormalizeArray(array bson.A) bson.A {
+func (e *EntityObservation) NormalizeArray(array bson.A) bson.A {
 	newA := bson.A{}
 	for _, v := range array {
 		if _, ok := v.(operator.Expression); ok {
@@ -36,7 +41,7 @@ func (e *EntityType) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *EntityType) NormalizeExpression(expression operator.Expression) any {
+func (e *EntityObservation) NormalizeExpression(expression operator.Expression) any {
 	rep := expression.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
@@ -47,17 +52,14 @@ func (e *EntityType) NormalizeExpression(expression operator.Expression) any {
 	return rep
 }
 
-type EntityObserver[T EntityModel] interface {
-	Filter(filter QueryPredicate) EntityRecord[T]
-}
-
 type EntityModel interface {
 	CollapseID() bool
 	IsEntangled() bool
-	GetEntityType() EntityType
+	GetEntityType() EntityObservation
 }
 
 type EntityModelBase struct {
+	// EntityObserver  EntityObservation `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
@@ -73,4 +75,32 @@ func (e *EntityModelBase) CollapseID() {
 
 func (e *EntityModelBase) IsEntangled() bool {
 	return !e.ID.IsZero()
+}
+
+func (e *EntityModelBase) GetEntityType() EntityObservation {
+	field, found := reflect.TypeOf(e).Elem().FieldByName("EntityObserver")
+	if !found {
+		panic("EntityObserver not found")
+	}
+
+	return EntityObservation{
+		DatabaseName:   field.Tag.Get("db"),
+		CollectionName: field.Tag.Get("collection"),
+	}
+}
+
+func Filter[T EntityModel](filter QueryPredicate) *EntityRecord[T] {
+	var template T
+	recording := &EntityRecord[T]{
+		Type: template.GetEntityType(),
+	}
+	return recording.Filter(filter)
+}
+
+func All[T EntityModel]() *EntityRecord[T] {
+	var template T
+	recording := &EntityRecord[T]{
+		Type: template.GetEntityType(),
+	}
+	return recording
 }

@@ -3,18 +3,20 @@ package entitymodel
 import (
 	"context"
 
+	"github.com/borghives/kosmos-go"
+	"github.com/borghives/kosmos-go/observation"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type EntityRecord[T EntityModel] struct {
-	Stages Aggregation
-	Type   EntityType
+	Type   EntityObservation
+	stages Aggregation
 }
 
 func (r *EntityRecord[T]) Filter(filter QueryPredicate) *EntityRecord[T] {
 
-	r.Stages = r.Stages.Match(r.Type.NormalizeExpression(filter).(bson.D))
+	r.stages = r.stages.Match(r.Type.NormalizeExpression(filter).(bson.D))
 	return r
 }
 
@@ -23,7 +25,7 @@ func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
 	if descending {
 		order = -1
 	}
-	r.Stages = r.Stages.Sort(bson.D{kv(field, order)})
+	r.stages = r.stages.Sort(bson.D{kv(field, order)})
 	return r
 }
 
@@ -47,13 +49,14 @@ func (r *EntityRecord[T]) PullAll() []*T {
 }
 
 func (r *EntityRecord[T]) dataCollection() *mongo.Collection {
-	return r.Type.Collection
+	observer := kosmos.SummonObserverFor(observation.PurposeAffinityObserver)
+	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
 }
 
 func (r *EntityRecord[T]) pullPipeline(postStages Aggregation) ([]*T, error) {
 	collection := r.dataCollection()
 
-	pipeline := r.Stages.AppendFrom(postStages).Pipeline()
+	pipeline := r.stages.AppendFrom(postStages).Pipeline()
 
 	cursor, err := collection.Aggregate(context.Background(), pipeline)
 	if err != nil {
