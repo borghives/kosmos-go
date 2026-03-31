@@ -49,6 +49,9 @@ func (e *ModelMeta) NormalizeExpression(expression operator.Expression) any {
 	return rep
 }
 
+type Observable interface {
+	GetMetadata() ModelMeta
+}
 type Model interface {
 	CollapseID() bson.ObjectID
 	IsEntangled() bool
@@ -75,8 +78,8 @@ func (e *BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func (e *BaseModel) GetMetadata() ModelMeta {
-	field, found := reflect.TypeOf(e).Elem().FieldByName("KMMeta")
+func (e BaseModel) GetMetadata() ModelMeta {
+	field, found := reflect.TypeOf(e).FieldByName("KMMeta")
 	if !found {
 		panic("KMMeta not found")
 	}
