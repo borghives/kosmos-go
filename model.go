@@ -50,15 +50,17 @@ func (e *ModelMeta) NormalizeExpression(expression operator.Expression) any {
 }
 
 type Observable interface {
-	GetMetadata() ModelMeta
+	IsEntangled() bool
+	LastObserved() time.Time
+	InitialObserved() time.Time
 }
+
 type Model interface {
 	CollapseID() bson.ObjectID
-	IsEntangled() bool
 }
 
 type BaseModel struct {
-	KMMeta      ModelMeta     `xml:"-" json:"-" bson:"-" kdb:"-" kcol:"-"`
+	// KMMeta      ModelMeta     `xml:"-" json:"-" bson:"-" kdb:"-" kcol:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
@@ -77,7 +79,15 @@ func (e BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func GetMetadata(obj any) ModelMeta {
+func (e BaseModel) LastObserved() time.Time {
+	return e.UpdatedTime
+}
+
+func (e BaseModel) InitialObserved() time.Time {
+	return e.CreatedTime
+}
+
+func GetMetadata(obj Observable) ModelMeta {
 	field, found := reflect.TypeOf(obj).FieldByName("KMMeta")
 	if !found {
 		panic("KMMeta not found")
