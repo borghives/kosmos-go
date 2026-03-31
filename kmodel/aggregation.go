@@ -1,4 +1,4 @@
-package entitymodel
+package kmodel
 
 import (
 	"encoding/json"

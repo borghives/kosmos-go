@@ -1,7 +1,7 @@
-package entitymodel
+package kmodel
 
 import (
-	"github.com/borghives/kosmos-go/entitymodel/operator"
+	"github.com/borghives/kosmos-go/kmodel/operator"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

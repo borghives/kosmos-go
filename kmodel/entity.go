@@ -1,23 +1,23 @@
-package entitymodel
+package kmodel
 
 import (
 	"reflect"
 	"time"
 
-	"github.com/borghives/kosmos-go/entitymodel/operator"
+	"github.com/borghives/kosmos-go/kmodel/operator"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type EntityObservation struct {
+type Meta struct {
 	CollectionName string
 	DatabaseName   string
 }
 
-func (e EntityObservation) IsValid() bool {
+func (e Meta) IsValid() bool {
 	return e.CollectionName != "" && e.DatabaseName != ""
 }
 
-func (e *EntityObservation) NormalizeDocument(document bson.D) bson.D {
+func (e *Meta) NormalizeDocument(document bson.D) bson.D {
 	newD := bson.D{}
 	for _, v := range document {
 		if _, ok := v.Value.(operator.Expression); ok {
@@ -29,7 +29,7 @@ func (e *EntityObservation) NormalizeDocument(document bson.D) bson.D {
 	return newD
 }
 
-func (e *EntityObservation) NormalizeArray(array bson.A) bson.A {
+func (e *Meta) NormalizeArray(array bson.A) bson.A {
 	newA := bson.A{}
 	for _, v := range array {
 		if _, ok := v.(operator.Expression); ok {
@@ -41,7 +41,7 @@ func (e *EntityObservation) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *EntityObservation) NormalizeExpression(expression operator.Expression) any {
+func (e *Meta) NormalizeExpression(expression operator.Expression) any {
 	rep := expression.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
@@ -52,20 +52,20 @@ func (e *EntityObservation) NormalizeExpression(expression operator.Expression) 
 	return rep
 }
 
-type EntityModel interface {
+type Entity interface {
 	CollapseID() bool
 	IsEntangled() bool
-	GetEntityType() EntityObservation
+	GetMeta() Meta
 }
 
-type EntityModelBase struct {
-	// EntityObserver  EntityObservation `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
+type EntityBase struct {
+	// EntityModelMeta  entitymodel.Meta `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
 }
 
-func (e *EntityModelBase) CollapseID() {
+func (e *EntityBase) CollapseID() {
 	if e.ID.IsZero() {
 		e.ID = bson.NewObjectID()
 		e.CreatedTime = time.Now()
@@ -73,34 +73,30 @@ func (e *EntityModelBase) CollapseID() {
 	e.UpdatedTime = time.Now()
 }
 
-func (e *EntityModelBase) IsEntangled() bool {
+func (e *EntityBase) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func (e *EntityModelBase) GetEntityType() EntityObservation {
-	field, found := reflect.TypeOf(e).Elem().FieldByName("EntityObserver")
+func (e *EntityBase) GetEntityType() Meta {
+	field, found := reflect.TypeOf(e).Elem().FieldByName("EntityModelMeta")
 	if !found {
-		panic("EntityObserver not found")
+		panic("EntityType not found")
 	}
 
-	return EntityObservation{
+	return Meta{
 		DatabaseName:   field.Tag.Get("db"),
 		CollectionName: field.Tag.Get("collection"),
 	}
 }
 
-func Filter[T EntityModel](filter QueryPredicate) *EntityRecord[T] {
-	var template T
-	recording := &EntityRecord[T]{
-		Type: template.GetEntityType(),
-	}
-	return recording.Filter(filter)
+func Filter[T Entity](filter QueryPredicate) *EntityRecord[T] {
+	return All[T]().Filter(filter)
 }
 
-func All[T EntityModel]() *EntityRecord[T] {
+func All[T Entity]() *EntityRecord[T] {
 	var template T
 	recording := &EntityRecord[T]{
-		Type: template.GetEntityType(),
+		Type: template.GetMeta(),
 	}
 	return recording
 }

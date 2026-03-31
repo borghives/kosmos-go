@@ -1,4 +1,4 @@
-package entitymodel
+package kmodel
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type EntityRecord[T EntityModel] struct {
-	Type   EntityObservation
+type EntityRecord[T Entity] struct {
+	Type   Meta
 	stages Aggregation
 }
 
