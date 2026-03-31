@@ -58,7 +58,7 @@ type Model interface {
 }
 
 type BaseModel struct {
-	// KMMeta  kosmos.ModelMeta `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
+	KMMeta      ModelMeta     `xml:"-" json:"-" bson:"-" kdb:"-" kcol:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
