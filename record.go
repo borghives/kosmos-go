@@ -10,7 +10,7 @@ import (
 )
 
 type EntityRecord[T Model] struct {
-	Type   ModelMetadata
+	Type   ModelMeta
 	stages model.Aggregation
 }
 

@@ -9,12 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type ModelMetadata struct {
+type ModelMeta struct {
 	CollectionName string
 	DatabaseName   string
 }
 
-func (e *ModelMetadata) NormalizeDocument(document bson.D) bson.D {
+func (e *ModelMeta) NormalizeDocument(document bson.D) bson.D {
 	newD := bson.D{}
 	for _, v := range document {
 		if _, ok := v.Value.(operator.Expression); ok {
@@ -26,7 +26,7 @@ func (e *ModelMetadata) NormalizeDocument(document bson.D) bson.D {
 	return newD
 }
 
-func (e *ModelMetadata) NormalizeArray(array bson.A) bson.A {
+func (e *ModelMeta) NormalizeArray(array bson.A) bson.A {
 	newA := bson.A{}
 	for _, v := range array {
 		if _, ok := v.(operator.Expression); ok {
@@ -38,7 +38,7 @@ func (e *ModelMetadata) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *ModelMetadata) NormalizeExpression(expression operator.Expression) any {
+func (e *ModelMeta) NormalizeExpression(expression operator.Expression) any {
 	rep := expression.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
@@ -52,11 +52,11 @@ func (e *ModelMetadata) NormalizeExpression(expression operator.Expression) any 
 type Model interface {
 	CollapseID() bool
 	IsEntangled() bool
-	GetMetadata() ModelMetadata
+	GetMetadata() ModelMeta
 }
 
 type BaseModel struct {
-	// KModelMetadata  kosmos.ModelMetadata `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
+	// KMMeta  kosmos.ModelMetadata `xml:"-" json:"-" bson:"-" db:"-" collection:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
@@ -74,13 +74,13 @@ func (e *BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func (e *BaseModel) GetMetadata() ModelMetadata {
-	field, found := reflect.TypeOf(e).Elem().FieldByName("ModelMetadata")
+func (e *BaseModel) GetMetadata() ModelMeta {
+	field, found := reflect.TypeOf(e).Elem().FieldByName("KMMeta")
 	if !found {
-		panic("ModelMetadata not found")
+		panic("KMMeta not found")
 	}
 
-	return ModelMetadata{
+	return ModelMeta{
 		DatabaseName:   field.Tag.Get("db"),
 		CollectionName: field.Tag.Get("collection"),
 	}
