@@ -52,7 +52,7 @@ func (a Aggregation) Pipeline() mongo.Pipeline {
 }
 
 // mainly for debugging
-func (a *Aggregation) JsonString() string {
+func (a Aggregation) JsonString() string {
 	// Convert pipeline to bson.A
 	bsonArray := bson.A{}
 	for _, stage := range a.pipeline {
