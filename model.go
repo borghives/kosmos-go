@@ -10,8 +10,8 @@ import (
 )
 
 type ModelMeta struct {
-	CollectionName string
 	DatabaseName   string
+	CollectionName string
 }
 
 func (e *ModelMeta) NormalizeDocument(document bson.D) bson.D {
@@ -77,16 +77,12 @@ func (e BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
-func (e BaseModel) GetMetadata() ModelMeta {
-	field, found := reflect.TypeOf(e).FieldByName("KMMeta")
+func GetMetadata(obj any) ModelMeta {
+	field, found := reflect.TypeOf(obj).FieldByName("KMMeta")
 	if !found {
 		panic("KMMeta not found")
 	}
-
-	return ModelMeta{
-		DatabaseName:   field.Tag.Get("kdb"),
-		CollectionName: field.Tag.Get("kcol"),
-	}
+	return ModelMeta{field.Tag.Get("kdb"), field.Tag.Get("kcol")}
 }
 
 func Filter[T Observable](filter model.QueryPredicate) *EntityRecord[T] {
@@ -96,7 +92,7 @@ func Filter[T Observable](filter model.QueryPredicate) *EntityRecord[T] {
 func All[T Observable]() *EntityRecord[T] {
 	var template T
 	recording := &EntityRecord[T]{
-		Type: template.GetMetadata(),
+		Type: GetMetadata(template),
 	}
 	return recording
 }
