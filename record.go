@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type EntityRecord[T Model] struct {
+type EntityRecord[T Observable] struct {
 	Type   ModelMeta
 	stages model.Aggregation
 }
@@ -29,17 +29,15 @@ func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
 	return r
 }
 
-func (r *EntityRecord[T]) PullOne() T {
+func (r *EntityRecord[T]) PullOne() *T {
 	results, err := r.pullPipeline(model.Aggregation{}.Limit(1))
 	if err != nil {
-		var zero T
-		return zero
+		return nil
 	}
 	if len(results) == 0 {
-		var zero T
-		return zero
+		return nil
 	}
-	return results[0]
+	return &results[0]
 }
 
 func (r *EntityRecord[T]) PullAll() []T {

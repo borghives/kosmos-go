@@ -55,7 +55,6 @@ type Observable interface {
 type Model interface {
 	CollapseID() bson.ObjectID
 	IsEntangled() bool
-	GetMetadata() ModelMeta
 }
 
 type BaseModel struct {
@@ -74,7 +73,7 @@ func (e *BaseModel) CollapseID() bson.ObjectID {
 	return e.ID
 }
 
-func (e *BaseModel) IsEntangled() bool {
+func (e BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
@@ -90,11 +89,11 @@ func (e BaseModel) GetMetadata() ModelMeta {
 	}
 }
 
-func Filter[T Model](filter model.QueryPredicate) *EntityRecord[T] {
+func Filter[T Observable](filter model.QueryPredicate) *EntityRecord[T] {
 	return All[T]().Filter(filter)
 }
 
-func All[T Model]() *EntityRecord[T] {
+func All[T Observable]() *EntityRecord[T] {
 	var template T
 	recording := &EntityRecord[T]{
 		Type: template.GetMetadata(),
