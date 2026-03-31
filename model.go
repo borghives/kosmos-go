@@ -17,9 +17,14 @@ type ModelMeta struct {
 func (e *ModelMeta) NormalizeDocument(document bson.D) bson.D {
 	newD := bson.D{}
 	for _, v := range document {
-		if _, ok := v.Value.(operator.Expression); ok {
-			newD = append(newD, kv(v.Key, e.NormalizeExpression(v.Value.(operator.Expression))))
-		} else {
+		switch val := v.Value.(type) {
+		case operator.Expression:
+			newD = append(newD, kv(v.Key, e.NormalizeExpression(val)))
+		case bson.D:
+			newD = append(newD, kv(v.Key, e.NormalizeDocument(val)))
+		case bson.A:
+			newD = append(newD, kv(v.Key, e.NormalizeArray(val)))
+		default:
 			newD = append(newD, v)
 		}
 	}
@@ -29,9 +34,14 @@ func (e *ModelMeta) NormalizeDocument(document bson.D) bson.D {
 func (e *ModelMeta) NormalizeArray(array bson.A) bson.A {
 	newA := bson.A{}
 	for _, v := range array {
-		if _, ok := v.(operator.Expression); ok {
-			newA = append(newA, e.NormalizeExpression(v.(operator.Expression)))
-		} else {
+		switch val := v.(type) {
+		case operator.Expression:
+			newA = append(newA, e.NormalizeExpression(val))
+		case bson.D:
+			newA = append(newA, e.NormalizeDocument(val))
+		case bson.A:
+			newA = append(newA, e.NormalizeArray(val))
+		default:
 			newA = append(newA, v)
 		}
 	}
@@ -59,8 +69,9 @@ type Model interface {
 	CollapseID() bson.ObjectID
 }
 
+// Usage Embed BaseModel to your model struct as the first field with kdb and kcol tags
+// Example: kosmos.BaseModel `xml:"-" json:"-" bson:"inline" kdb:"pieriansea" kcol:"page"`
 type BaseModel struct {
-	// KMMeta      ModelMeta     `xml:"-" json:"-" bson:"-" kdb:"-" kcol:"-"`
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
 	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
@@ -88,9 +99,9 @@ func (e BaseModel) InitialObserved() time.Time {
 }
 
 func GetMetadata(obj Observable) ModelMeta {
-	field, found := reflect.TypeOf(obj).FieldByName("KMMeta")
+	field, found := reflect.TypeOf(obj).FieldByName("BaseModel")
 	if !found {
-		panic("KMMeta not found")
+		panic("BaseModel not found")
 	}
 	return ModelMeta{field.Tag.Get("kdb"), field.Tag.Get("kcol")}
 }

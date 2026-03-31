@@ -14,6 +14,7 @@ var (
 
 func ColapseObserverConstants() *MongoObserverConstants {
 	mongoObserverOnce.Do(func() {
+		CollapseConstants()
 		mongoObserverConstants = &MongoObserverConstants{}
 		mongoObserverConstants.Coalesce()
 	})

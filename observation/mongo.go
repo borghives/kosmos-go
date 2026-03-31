@@ -22,11 +22,26 @@ type PurposeAffinity int
 
 const (
 	PurposeAffinityUnknown PurposeAffinity = iota
-	PurposeAffinityObserver
-	PurposeAffinityCreator
 	PurposeAffinityAdmin
+	PurposeAffinityCreator
+	PurposeAffinityObserver
 	PurposeAffinityCount //Max Count/Value for PurposeAffinity
 )
+
+func (p PurposeAffinity) String() string {
+	switch p {
+	case PurposeAffinityUnknown:
+		return "Unknown"
+	case PurposeAffinityAdmin:
+		return "Admin"
+	case PurposeAffinityCreator:
+		return "Creator"
+	case PurposeAffinityObserver:
+		return "Observer"
+	default:
+		return "Unknown"
+	}
+}
 
 func CollapseMongoURISecret(uri string) (string, error) {
 	// 1. Isolate the scheme

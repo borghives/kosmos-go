@@ -2,7 +2,6 @@ package kosmos
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/borghives/kosmos-go/model"
 	"github.com/borghives/kosmos-go/observation"
@@ -54,9 +53,12 @@ func (r *EntityRecord[T]) dataCollection() *mongo.Collection {
 	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
 }
 
+func (r *EntityRecord[T]) PipelineJSON() string {
+	return r.stages.JsonString()
+}
+
 func (r *EntityRecord[T]) pullPipeline(postStages model.Aggregation) ([]T, error) {
 	collection := r.dataCollection()
-	fmt.Println(r.stages.AppendFrom(postStages).JsonString())
 	pipeline := r.stages.AppendFrom(postStages).Pipeline()
 
 	cursor, err := collection.Aggregate(context.Background(), pipeline)
