@@ -29,18 +29,20 @@ func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
 	return r
 }
 
-func (r *EntityRecord[T]) PullOne() *T {
+func (r *EntityRecord[T]) PullOne() T {
 	results, err := r.pullPipeline(model.Aggregation{}.Limit(1))
 	if err != nil {
-		return nil
+		var zero T
+		return zero
 	}
 	if len(results) == 0 {
-		return nil
+		var zero T
+		return zero
 	}
 	return results[0]
 }
 
-func (r *EntityRecord[T]) PullAll() []*T {
+func (r *EntityRecord[T]) PullAll() []T {
 	results, err := r.pullPipeline(model.Aggregation{})
 	if err != nil {
 		return nil
@@ -53,7 +55,7 @@ func (r *EntityRecord[T]) dataCollection() *mongo.Collection {
 	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
 }
 
-func (r *EntityRecord[T]) pullPipeline(postStages model.Aggregation) ([]*T, error) {
+func (r *EntityRecord[T]) pullPipeline(postStages model.Aggregation) ([]T, error) {
 	collection := r.dataCollection()
 
 	pipeline := r.stages.AppendFrom(postStages).Pipeline()
@@ -64,7 +66,7 @@ func (r *EntityRecord[T]) pullPipeline(postStages model.Aggregation) ([]*T, erro
 	}
 	defer cursor.Close(context.Background())
 
-	var results []*T
+	var results []T
 	cursor.All(context.Background(), &results)
 	return results, nil
 }
