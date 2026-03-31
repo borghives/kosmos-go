@@ -14,23 +14,27 @@ func (q QueryPredicate) ToRepr() any {
 	return bson.D{kv(q.FieldName.Name, q.Expression.ToRepr())}
 }
 
-// --- Fld ---
-type Fld struct {
+// --- QueryField ---
+func Fld(name string) QueryField {
+	return QueryField{Name: name}
+}
+
+type QueryField struct {
 	Name string
 }
 
-func (q Fld) wrapFieldName() *operator.FieldName {
+func (q QueryField) wrapFieldName() *operator.FieldName {
 	return &operator.FieldName{Name: q.Name}
 }
 
-func (q Fld) ToQueryPredicate(queryOp operator.QueryOpExpression) QueryPredicate {
+func (q QueryField) ToQueryPredicate(queryOp operator.QueryOpExpression) QueryPredicate {
 	return QueryPredicate{
 		FieldName:  q.wrapFieldName(),
 		Expression: queryOp,
 	}
 }
 
-func (q Fld) LiteralSlice(values []any) []operator.LiteralValue {
+func (q QueryField) LiteralSlice(values []any) []operator.LiteralValue {
 	literals := make([]operator.LiteralValue, len(values))
 	for i, v := range values {
 		literals[i] = q.Literal(v)
@@ -38,7 +42,7 @@ func (q Fld) LiteralSlice(values []any) []operator.LiteralValue {
 	return literals
 }
 
-func (q Fld) Literal(value any) operator.LiteralValue {
+func (q QueryField) Literal(value any) operator.LiteralValue {
 
 	return operator.LiteralValue{
 		Value: value,
@@ -46,7 +50,7 @@ func (q Fld) Literal(value any) operator.LiteralValue {
 	}
 }
 
-func (q Fld) Eq(value any) QueryPredicate {
+func (q QueryField) Eq(value any) QueryPredicate {
 	litValue := q.Literal(value)
 	return q.ToQueryPredicate(operator.Eq(litValue))
 }
