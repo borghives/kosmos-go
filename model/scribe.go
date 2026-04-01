@@ -27,20 +27,20 @@ type Collapsable interface {
 	IsEntangled() bool
 	CollapseID() bson.ObjectID
 	Collapse() Ripple   //return the ripple side effect after the collapse.  This will implicitly collapse the ID
-	ImpactScope() Scope //return the scope to filter by
+	WitnessScope() Scope //return the scope to filter by
 }
 
-type EntityObservation[T Collapsable] struct {
+type EntityObserver[T Collapsable] struct {
 	Type Metadata
 }
 
-func (r *EntityObservation[T]) dataCollection() *mongo.Collection {
+func (r *EntityObserver[T]) dataCollection() *mongo.Collection {
 	observer := observation.SummonMongo(observation.PurposeAffinityObserver)
 	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
 }
 
-func (r *EntityObservation[T]) Witness(model T) {
-	scope := model.ImpactScope()
+func (r *EntityObserver[T]) Witness(model T) {
+	scope := model.WitnessScope()
 	isEntangled := model.IsEntangled()
 	ripple := model.Collapse()
 

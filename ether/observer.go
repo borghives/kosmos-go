@@ -12,7 +12,7 @@ var (
 	mongoObserverOnce      sync.Once
 )
 
-func ColapseObserverConstants() *MongoObserverConstants {
+func CollapseObserverConstants() *MongoObserverConstants {
 	mongoObserverOnce.Do(func() {
 		CollapseConstants()
 		mongoObserverConstants = &MongoObserverConstants{}

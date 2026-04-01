@@ -281,6 +281,22 @@ func (m *LocalKeyring) AccessSecret(secretID, versionID string) (string, error) 
 	return secret, nil
 }
 
+func (m *LocalKeyring) ListSecrets() ([]SecretInfo, error) {
+	return nil, errors.New("ListSecrets not supported for LocalKeyring")
+}
+
+func (m *LocalKeyring) CreateSecret(name string) error {
+	return errors.New("CreateSecret not supported for LocalKeyring")
+}
+
+func (m *LocalKeyring) AddSecretVersion(name, payload string) error {
+	return errors.New("AddSecretVersion not supported for LocalKeyring")
+}
+
+func (m *LocalKeyring) IsSecretStale(name string, ttlHour int) bool {
+	return false
+}
+
 // -- helper function --
 
 func loadDotenvsecretDisabled() bool {

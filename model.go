@@ -31,8 +31,8 @@ func (e *BaseModel) Collapse() model.Ripple {
 	return ripple
 }
 
-func (e *BaseModel) ImpactScope() model.Scope {
-	return model.Scope{} // no impact scope to filter for base model
+func (e *BaseModel) WitnessScope() model.Scope {
+	return model.Scope{} // no witness scope to filter for base model
 }
 
 func (e BaseModel) IsEntangled() bool {
@@ -60,7 +60,7 @@ func All[T model.Observable]() *model.EntityRecord[T] {
 }
 
 func Witness[C model.Collapsable](obj C) C {
-	observer := &model.EntityObservation[C]{
+	observer := &model.EntityObserver[C]{
 		Type: model.GetMetadata(obj),
 	}
 	observer.Witness(obj)

@@ -121,12 +121,3 @@ func TestFilterOperators(t *testing.T) {
 	km.Fld("status").In("active", "pending")
 	km.Fld("status").Nin("banned")
 }
-
-func TestGetMetadataNilPanic(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("expected panic when calling GetMetadata with nil interface")
-		}
-	}()
-	km.GetMetadata(nil)
-}

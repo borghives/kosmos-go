@@ -86,7 +86,7 @@ func CollapseMongoURISecret(uri string) (string, error) {
 }
 
 func CollapseURIFor(purpose PurposeAffinity) (string, error) {
-	constants := ether.ColapseObserverConstants()
+	constants := ether.CollapseObserverConstants()
 	if constants.CmdUri != "" {
 		return CollapseMongoURISecret(constants.CmdUri)
 	}
