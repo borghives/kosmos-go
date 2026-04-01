@@ -1,31 +1,39 @@
 # Antigravity Rules & Guidelines
 
-## 1. Naming Strategy: The Ontological Engine
-When generating code, defining data structures, or architecting systems for the "Kosmos" project, you MUST adhere to the following philosophical and structural naming conventions. 
+## 1. Naming Strategy: The Quantum Engine
+When generating code, defining data structures, or architecting systems for the "Kosmos" project, you MUST adhere to the following philosophical and structural naming conventions. The paradigm focuses on quantum mechanics, observation, and reality manifestation.
 
 ### Foundational Definitions (The Blueprint)
-Use the following prefixes when a structure defines the "shape", "law", or "blueprint" of an object *before* it is instantiated into reality:
+Use the following concepts and terminology when interacting with the state, lifecycle, and structure of objects:
 
-* **`Kosmos.Arche`** (Pronounced: Ar-kee)
-  * **Concept:** The "First Principle" or fundamental substance.
-  * **Usage:** Use for the absolute base-class or foundational interface that all other realities and models inherit or derive from.
+* **`Collapse` / `Collapsable`**
+  * **Concept:** Collapsing a quantum probability into a defined reality.
+  * **Usage:** Use for resolving state, generating IDs, establishing creation times, or resolving secrets into actual tangible values. It represents the transition from potential to actual state.
 
-* **`Kosmos.Schema`**
-  * **Concept:** Greek for "form, shape, or figure", representing the universal blueprint.
-  * **Usage:** Use for practical, highly-readable blueprint definitions. Bridges the gap between ancient philosophy and modern software engineering.
+* **`Witness` / `Observer`**
+  * **Concept:** The act of observation that fixes an entity's state into empirical reality.
+  * **Usage:** Use for database operations, persistence layers, or actors that track an entity's state. An `Observer` interacts with the datastore, and to `Witness` is to commit or persist a specific state.
 
-* **`Kosmos.Nomos`**
-  * **Concept:** Law or Convention (often contrasted with *Physis*, nature). The structural rule imposed on reality.
-  * **Usage:** Use for defining the strict "laws", "schemas", filters, or validations applied to objects.
+* **`Ripple`**
+  * **Concept:** Causal side effects extending outwards through reality from an event.
+  * **Usage:** Use for defining reactive changes or secondary updates that must occur alongside a `Collapse` or `Witness` event (e.g., defining side-effects like MongoDB `$setOnInsert` operations).
 
-* **`Kosmos.Manifold`**
-  * **Concept:** A topological space or structure.
-  * **Usage:** Use when defining the "shape", "space", or overarching container of a complex data structure.
+* **`Entangled`**
+  * **Concept:** The state of being inextricably linked to the underlying fabric of reality (the database).
+  * **Usage:** Use for checking if an object has identity or exists in the system (e.g., `IsEntangled()` to check if an entity already has a primary key/ID).
 
-* **`Kosmos.Axiom`**
-  * **Concept:** An unprovable mathematical truth that serves as an absolute starting point.
-  * **Usage:** Use for foundational model definitions; the absolute truth upon which the rest of the Kosmos theorem is built.
+* **`Summon`**
+  * **Concept:** Calling forth an authoritative entity or service into the active context.
+  * **Usage:** Use for factory functions, singletons, or initialization methods that bring managers, configurations, or observers into the operational context (e.g., `SummonSecretManager()`).
 
-* **`Kosmos.Entity`**
-  * **Concept:** A stateful thing that exists.
-  * **Usage:** Use for foundational model definitions; the absolute truth upon which the rest of the Kosmos theorem is built.
+* **`Coalesce`**
+  * **Concept:** Bringing disparate pieces of unformed data into a unified, coherent whole.
+  * **Usage:** Use for configuration builders, merging environment variables, files, and command-line arguments into a single structural source of truth.
+
+* **`Ether`**
+  * **Concept:** The ambient, all-permeating medium holding the configurations and secrets of the universe.
+  * **Usage:** Use for the foundational packages or interfaces dealing with environment variables, secrets, configuration streams, and system boundaries.
+
+* **`Observable`**
+  * **Concept:** A stateful entity that exists and can be tracked, queried, or pulled upon.
+  * **Usage:** Use for foundational model interfaces representing structs that can be resolved, filtered, or fetched from the reality storage.

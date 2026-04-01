@@ -8,7 +8,7 @@ import (
 )
 
 // Usage Embed BaseModel to your model struct as the first field with kdb and kcol tags
-// Example: kosmos.BaseModel `xml:"-" json:"-" bson:"inline" kdb:"pieriansea" kcol:"page"`
+// Example: kosmos.BaseModel `bson:",inline" kdb:"pieriansea" kcol:"page"`
 type BaseModel struct {
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
