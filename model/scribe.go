@@ -26,8 +26,8 @@ func OnInsertRipple(key string, value any) Ripple {
 type Collapsable interface {
 	IsEntangled() bool
 	CollapseID() bson.ObjectID
-	Collapse() Ripple
-	ImpactScope() Scope
+	Collapse() Ripple   //return the ripple side effect after the collapse.  This will implicitly collapse the ID
+	ImpactScope() Scope //return the scope to filter by
 }
 
 type EntityObservation[T Collapsable] struct {

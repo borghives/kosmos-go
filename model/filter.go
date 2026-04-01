@@ -54,3 +54,31 @@ func (q QueryField) Eq(value any) QueryPredicate {
 	litValue := q.Literal(value)
 	return q.ToQueryPredicate(operator.Eq(litValue))
 }
+
+func (q QueryField) Ne(value any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Ne(q.Literal(value)))
+}
+
+func (q QueryField) Gt(value any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Gt(q.Literal(value)))
+}
+
+func (q QueryField) Gte(value any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Gte(q.Literal(value)))
+}
+
+func (q QueryField) Lt(value any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Lt(q.Literal(value)))
+}
+
+func (q QueryField) Lte(value any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Lte(q.Literal(value)))
+}
+
+func (q QueryField) In(values ...any) QueryPredicate {
+	return q.ToQueryPredicate(operator.In(q.LiteralSlice(values)))
+}
+
+func (q QueryField) Nin(values ...any) QueryPredicate {
+	return q.ToQueryPredicate(operator.Nin(q.LiteralSlice(values)))
+}

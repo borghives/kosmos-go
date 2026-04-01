@@ -1,7 +1,6 @@
 package kosmos_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/borghives/kosmos-go"
@@ -32,7 +31,6 @@ func TestFilter(t *testing.T) {
 	record := kosmos.Filter[TestModel](
 		km.Fld("_id").Eq(id),
 	)
-	fmt.Println(record.PipelineJSON())
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
 	}
@@ -106,5 +104,29 @@ func TestBaseModelCollapseID(t *testing.T) {
 	if m.InitialObserved().IsZero() {
 		t.Error("expected InitialObserved to be set")
 	}
+}
 
+func TestFilterOperators(t *testing.T) {
+	record := kosmos.Filter[TestModel](km.Fld("age").Gt(18)).Sort("name", false)
+	json := record.PipelineJSON()
+	if json == "" {
+		t.Error("expected valid pipeline json")
+	}
+
+	// Just invoke other operators to ensure they build correctly without panic
+	km.Fld("age").Gte(18)
+	km.Fld("age").Lt(18)
+	km.Fld("age").Lte(18)
+	km.Fld("age").Ne(18)
+	km.Fld("status").In("active", "pending")
+	km.Fld("status").Nin("banned")
+}
+
+func TestGetMetadataNilPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("expected panic when calling GetMetadata with nil interface")
+		}
+	}()
+	km.GetMetadata(nil)
 }

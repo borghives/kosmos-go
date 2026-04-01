@@ -1,6 +1,7 @@
 package model
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/borghives/kosmos-go/model/operator"
@@ -14,12 +15,15 @@ type Metadata struct {
 
 func GetMetadata(obj any) Metadata {
 	t := reflect.TypeOf(obj)
+	if t == nil {
+		log.Fatal("model.GetMetadata: cannot extract metadata from a nil interface")
+	}
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 	field, found := t.FieldByName("BaseModel")
 	if !found {
-		panic("BaseModel not found")
+		log.Fatal("model.GetMetadata: BaseModel not found")
 	}
 	return Metadata{
 		DatabaseName:   field.Tag.Get("kdb"),
