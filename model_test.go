@@ -71,17 +71,44 @@ func TestFilterPointer(t *testing.T) {
 }
 
 func TestNormalizeDocument(t *testing.T) {
-	meta := km.Metadata{}
+	meta := km.GetMetadata(TestModel{})
+
+	// Create an expression that should trigger FieldName rewrite.
+	exprID := km.Fld("ID").Eq(123)
+	exprName := km.Fld("Name").Eq("MAGIC")
+
+	// Test that 'ID' and 'Name' are mapped to '_id' and 'name' ONLY when used via Expressions.
+	// Raw string keys should NOT be mapped.
 	doc := bson.D{
-		{Key: "a", Value: bson.D{{Key: "$eq", Value: 1}}},
-		{Key: "b", Value: km.Fld("field").Eq(2)},
-		{Key: "c", Value: bson.A{1, km.Fld("field2").Eq(3)}},
+		{Key: "ID", Value: 1},
+		{Key: "Name", Value: "Raw"},
+		{Key: "query", Value: bson.A{exprID, exprName}},
 	}
+	
 	norm := meta.NormalizeDocument(doc)
 
-	// Just check if normalization succeeded without panicking and basic structure maintained.
-	if len(norm) != 3 {
-		t.Errorf("expected length 3, got %d", len(norm))
+	// Check unmapped keys
+	if norm[0].Key != "ID" {
+		t.Errorf("expected raw 'ID' key to be unchanged, got %s", norm[0].Key)
+	}
+	if norm[1].Key != "Name" {
+		t.Errorf("expected raw 'Name' key to be unchanged, got %s", norm[1].Key)
+	}
+
+	// Unpack the array to find mapped expressions
+	arrValue := norm[2].Value.(bson.A)
+	if len(arrValue) != 2 {
+		t.Fatalf("expected 2 array elements, got %d", len(arrValue))
+	}
+
+	idDoc := arrValue[0].(bson.D)
+	if len(idDoc) == 0 || idDoc[0].Key != "_id" {
+		t.Errorf("expected 'ID' to be normalized to '_id', got %s", idDoc[0].Key)
+	}
+
+	nameDoc := arrValue[1].(bson.D)
+	if len(nameDoc) == 0 || nameDoc[0].Key != "name" {
+		t.Errorf("expected 'Name' to be normalized to 'name', got %s", nameDoc[0].Key)
 	}
 }
 
