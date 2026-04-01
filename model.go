@@ -47,8 +47,8 @@ func (e BaseModel) InitialObserved() time.Time {
 	return e.CreatedTime
 }
 
-func Filter[T model.Observable](filter model.QueryPredicate) *model.EntityRecord[T] {
-	return All[T]().Filter(filter)
+func Filter[T model.Observable](filters ...model.QueryFieldPredicate) *model.EntityRecord[T] {
+	return All[T]().Filter(filters...)
 }
 
 func All[T model.Observable]() *model.EntityRecord[T] {

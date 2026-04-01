@@ -5,12 +5,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type QueryPredicate struct {
-	FieldName *expression.FieldName
+type QueryFieldPredicate struct {
+	FieldName expression.FieldName
 	Query     expression.QueryOp
 }
 
-func (q QueryPredicate) ToRepr() any {
+func (q QueryFieldPredicate) ToRepr() any {
 	return bson.D{kv(q.FieldName.Name, q.Query.ToRepr())}
 }
 
@@ -23,12 +23,12 @@ type QueryField struct {
 	Name string
 }
 
-func (q QueryField) wrapFieldName() *expression.FieldName {
-	return &expression.FieldName{Name: q.Name}
+func (q QueryField) wrapFieldName() expression.FieldName {
+	return expression.FieldName{Name: q.Name}
 }
 
-func (q QueryField) ToQueryPredicate(queryOp expression.QueryOp) QueryPredicate {
-	return QueryPredicate{
+func (q QueryField) ToQueryPredicate(queryOp expression.QueryOp) QueryFieldPredicate {
+	return QueryFieldPredicate{
 		FieldName: q.wrapFieldName(),
 		Query:     queryOp,
 	}
@@ -49,35 +49,35 @@ func (q QueryField) Literal(value any) expression.LiteralValue {
 	}
 }
 
-func (q QueryField) Eq(value any) QueryPredicate {
+func (q QueryField) Eq(value any) QueryFieldPredicate {
 	litValue := q.Literal(value)
 	return q.ToQueryPredicate(expression.Eq(litValue))
 }
 
-func (q QueryField) Ne(value any) QueryPredicate {
+func (q QueryField) Ne(value any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Ne(q.Literal(value)))
 }
 
-func (q QueryField) Gt(value any) QueryPredicate {
+func (q QueryField) Gt(value any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Gt(q.Literal(value)))
 }
 
-func (q QueryField) Gte(value any) QueryPredicate {
+func (q QueryField) Gte(value any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Gte(q.Literal(value)))
 }
 
-func (q QueryField) Lt(value any) QueryPredicate {
+func (q QueryField) Lt(value any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Lt(q.Literal(value)))
 }
 
-func (q QueryField) Lte(value any) QueryPredicate {
+func (q QueryField) Lte(value any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Lte(q.Literal(value)))
 }
 
-func (q QueryField) In(values ...any) QueryPredicate {
+func (q QueryField) In(values ...any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.In(q.LiteralSlice(values)))
 }
 
-func (q QueryField) Nin(values ...any) QueryPredicate {
+func (q QueryField) Nin(values ...any) QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.Nin(q.LiteralSlice(values)))
 }

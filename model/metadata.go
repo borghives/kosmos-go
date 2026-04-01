@@ -91,7 +91,7 @@ func (e *Metadata) NormalizeDocument(document bson.D) bson.D {
 	for _, v := range document {
 		switch val := v.Value.(type) {
 		case expression.Base:
-			newD = append(newD, kv(v.Key, e.NormalizeStatement(val)))
+			newD = append(newD, kv(v.Key, e.NormalizeExpression(val)))
 		case bson.D:
 			newD = append(newD, kv(v.Key, e.NormalizeDocument(val)))
 		case bson.A:
@@ -108,7 +108,7 @@ func (e *Metadata) NormalizeArray(array bson.A) bson.A {
 	for _, v := range array {
 		switch val := v.(type) {
 		case expression.Base:
-			newA = append(newA, e.NormalizeStatement(val))
+			newA = append(newA, e.NormalizeExpression(val))
 		case bson.D:
 			newA = append(newA, e.NormalizeDocument(val))
 		case bson.A:
@@ -120,15 +120,15 @@ func (e *Metadata) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *Metadata) NormalizeStatement(statement expression.Base) any {
-	switch expr := statement.(type) {
-	case QueryPredicate:
-		return e.NormalizeDocument(bson.D{{Key: e.resolveAlias(expr.FieldName.Name), Value: e.NormalizeStatement(expr.Query)}})
+func (e *Metadata) NormalizeExpression(expr expression.Base) any {
+	switch exprType := expr.(type) {
+	case QueryFieldPredicate:
+		return e.NormalizeDocument(bson.D{{Key: e.resolveAlias(exprType.FieldName.Name), Value: e.NormalizeExpression(exprType.Query)}})
 	case expression.FieldName:
-		return e.resolveAlias(expr.Name)
+		return e.resolveAlias(exprType.Name)
 	}
 
-	rep := statement.ToRepr()
+	rep := expr.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
 		return e.NormalizeArray(rep)

@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 
+	"github.com/borghives/kosmos-go/model/expression"
 	"github.com/borghives/kosmos-go/observation"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -13,9 +14,33 @@ type EntityRecord[T Observable] struct {
 	stages Aggregation
 }
 
-func (r *EntityRecord[T]) Filter(filter QueryPredicate) *EntityRecord[T] {
+func (r *EntityRecord[T]) Filter(filters ...QueryFieldPredicate) *EntityRecord[T] {
+	if len(filters) == 0 {
+		return r
+	} else if len(filters) == 1 {
+		r.stages = r.stages.Match(r.Type.NormalizeExpression(filters[0]).(bson.D))
+	} else {
+		exprs := make([]expression.Base, len(filters))
+		for i, f := range filters {
+			exprs[i] = f
+		}
+		r.stages = r.stages.Match(r.Type.NormalizeExpression(expression.And(exprs...)).(bson.D))
+	}
+	return r
+}
 
-	r.stages = r.stages.Match(r.Type.NormalizeStatement(filter).(bson.D))
+func (r *EntityRecord[T]) FilterEither(filters ...QueryFieldPredicate) *EntityRecord[T] {
+	if len(filters) == 0 {
+		return r
+	} else if len(filters) == 1 {
+		r.stages = r.stages.Match(r.Type.NormalizeExpression(filters[0]).(bson.D))
+	} else {
+		exprs := make([]expression.Base, len(filters))
+		for i, f := range filters {
+			exprs[i] = f
+		}
+		r.stages = r.stages.Match(r.Type.NormalizeExpression(expression.Or(exprs...)).(bson.D))
+	}
 	return r
 }
 

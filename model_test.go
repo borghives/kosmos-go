@@ -55,6 +55,37 @@ func TestFilter(t *testing.T) {
 	}
 }
 
+func TestFilterPredicate(t *testing.T) {
+	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
+
+	// Create a filter matching the id
+	record := kosmos.Filter[TestModel](
+		km.Fld("_id").Eq(id),
+		km.Fld("name").Eq("MAGIC"),
+	)
+	if record == nil {
+		t.Fatalf("expected record to not be nil")
+	}
+
+	// Verify that the metadata was extracted properly
+	if record.Type.DatabaseName != "test_db" {
+		t.Errorf("expected database name 'test_db', got '%s'", record.Type.DatabaseName)
+	}
+	if record.Type.CollectionName != "test_coll" {
+		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
+	}
+
+	obj := record.PullOne()
+	if obj == nil {
+		t.Fatalf("expected object to not be nil")
+	}
+	if obj.ID != id {
+		t.Errorf("expected object id '%s', got '%s'", id, obj.ID)
+	}
+	if obj.Name != "MAGIC" {
+		t.Errorf("expected object name 'test', got '%s'", obj.Name)
+	}
+}
 func TestFilterPointer(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -84,7 +115,7 @@ func TestNormalizeDocument(t *testing.T) {
 		{Key: "Name", Value: "Raw"},
 		{Key: "query", Value: bson.A{exprID, exprName}},
 	}
-	
+
 	norm := meta.NormalizeDocument(doc)
 
 	// Check unmapped keys

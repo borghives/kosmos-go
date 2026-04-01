@@ -42,3 +42,19 @@ func In(value any) QueryOp {
 func Nin(value any) QueryOp {
 	return QueryOp{"$nin", value}
 }
+
+func And(values ...Base) QueryOp {
+	valuesA := make(bson.A, len(values))
+	for i, v := range values {
+		valuesA[i] = v
+	}
+	return QueryOp{"$and", valuesA}
+}
+
+func Or(values ...Base) QueryOp {
+	valuesA := make(bson.A, len(values))
+	for i, v := range values {
+		valuesA[i] = v
+	}
+	return QueryOp{"$or", valuesA}
+}
