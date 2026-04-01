@@ -1,20 +1,19 @@
-package kosmos
+package model
 
 import (
 	"context"
 
-	"github.com/borghives/kosmos-go/model"
 	"github.com/borghives/kosmos-go/observation"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type EntityRecord[T Observable] struct {
-	Type   ModelMeta
-	stages model.Aggregation
+	Type   Metadata
+	stages Aggregation
 }
 
-func (r *EntityRecord[T]) Filter(filter model.QueryPredicate) *EntityRecord[T] {
+func (r *EntityRecord[T]) Filter(filter QueryPredicate) *EntityRecord[T] {
 
 	r.stages = r.stages.Match(r.Type.NormalizeExpression(filter).(bson.D))
 	return r
@@ -30,7 +29,7 @@ func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
 }
 
 func (r *EntityRecord[T]) PullOne() *T {
-	results, err := r.pullPipeline(model.Aggregation{}.Limit(1))
+	results, err := r.pullPipeline(Aggregation{}.Limit(1))
 	if err != nil {
 		return nil
 	}
@@ -41,7 +40,7 @@ func (r *EntityRecord[T]) PullOne() *T {
 }
 
 func (r *EntityRecord[T]) PullAll() []T {
-	results, err := r.pullPipeline(model.Aggregation{})
+	results, err := r.pullPipeline(Aggregation{})
 	if err != nil {
 		return nil
 	}
@@ -57,7 +56,7 @@ func (r *EntityRecord[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r *EntityRecord[T]) pullPipeline(postStages model.Aggregation) ([]T, error) {
+func (r *EntityRecord[T]) pullPipeline(postStages Aggregation) ([]T, error) {
 	collection := r.dataCollection()
 	pipeline := r.stages.AppendFrom(postStages).Pipeline()
 

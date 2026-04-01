@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/borghives/kosmos-go"
-	"github.com/borghives/kosmos-go/model"
+	km "github.com/borghives/kosmos-go/model"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -15,15 +15,22 @@ type TestModel struct {
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
-var _ kosmos.Observable = TestModel{}
-var _ kosmos.Observable = (*TestModel)(nil)
+var _ km.Observable = TestModel{}
+var _ km.Observable = (*TestModel)(nil)
+
+func TestWitness(t *testing.T) {
+	m := TestModel{
+		Name: "MAGIC_Ed4",
+	}
+	kosmos.Witness(&m)
+}
 
 func TestFilter(t *testing.T) {
 	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		model.Fld("_id").Eq(id),
+		km.Fld("_id").Eq(id),
 	)
 	fmt.Println(record.PipelineJSON())
 	if record == nil {
@@ -47,6 +54,57 @@ func TestFilter(t *testing.T) {
 	}
 	if obj.Name != "MAGIC" {
 		t.Errorf("expected object name 'test', got '%s'", obj.Name)
+	}
+}
+
+func TestFilterPointer(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Filterpanicked with pointer model: %v", r)
+		}
+	}()
+	// Create a filter with pointer T
+	record := kosmos.Filter[*TestModel](
+		km.Fld("_id").Eq(bson.NewObjectID()),
+	)
+	if record.Type.DatabaseName != "test_db" {
+		t.Errorf("expected test_db, got %s", record.Type.DatabaseName)
+	}
+}
+
+func TestNormalizeDocument(t *testing.T) {
+	meta := km.Metadata{}
+	doc := bson.D{
+		{Key: "a", Value: bson.D{{Key: "$eq", Value: 1}}},
+		{Key: "b", Value: km.Fld("field").Eq(2)},
+		{Key: "c", Value: bson.A{1, km.Fld("field2").Eq(3)}},
+	}
+	norm := meta.NormalizeDocument(doc)
+
+	// Just check if normalization succeeded without panicking and basic structure maintained.
+	if len(norm) != 3 {
+		t.Errorf("expected length 3, got %d", len(norm))
+	}
+}
+
+func TestBaseModelCollapseID(t *testing.T) {
+	m := kosmos.BaseModel{}
+	if m.IsEntangled() {
+		t.Error("expected new model to not be entangled")
+	}
+
+	id := m.CollapseID()
+	if id.IsZero() {
+		t.Error("expected non-zero id after collapse")
+	}
+	if !m.IsEntangled() {
+		t.Error("expected model to be entangled after collapse")
+	}
+	if m.ID != id {
+		t.Errorf("expected m.ID to be %v, got %v", id, m.ID)
+	}
+	if m.InitialObserved().IsZero() {
+		t.Error("expected InitialObserved to be set")
 	}
 
 }
