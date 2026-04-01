@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/borghives/kosmos-go/model/operator"
+	"github.com/borghives/kosmos-go/model/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -90,8 +90,8 @@ func (e *Metadata) NormalizeDocument(document bson.D) bson.D {
 	newD := make(bson.D, 0, len(document))
 	for _, v := range document {
 		switch val := v.Value.(type) {
-		case operator.Expression:
-			newD = append(newD, kv(v.Key, e.NormalizeExpression(val)))
+		case expression.Base:
+			newD = append(newD, kv(v.Key, e.NormalizeStatement(val)))
 		case bson.D:
 			newD = append(newD, kv(v.Key, e.NormalizeDocument(val)))
 		case bson.A:
@@ -107,8 +107,8 @@ func (e *Metadata) NormalizeArray(array bson.A) bson.A {
 	newA := make(bson.A, 0, len(array))
 	for _, v := range array {
 		switch val := v.(type) {
-		case operator.Expression:
-			newA = append(newA, e.NormalizeExpression(val))
+		case expression.Base:
+			newA = append(newA, e.NormalizeStatement(val))
 		case bson.D:
 			newA = append(newA, e.NormalizeDocument(val))
 		case bson.A:
@@ -120,17 +120,15 @@ func (e *Metadata) NormalizeArray(array bson.A) bson.A {
 	return newA
 }
 
-func (e *Metadata) NormalizeExpression(expression operator.Expression) any {
-	switch expr := expression.(type) {
+func (e *Metadata) NormalizeStatement(statement expression.Base) any {
+	switch expr := statement.(type) {
 	case QueryPredicate:
-		return e.NormalizeDocument(bson.D{{Key: e.resolveAlias(expr.FieldName.Name), Value: e.NormalizeExpression(expr.Expression)}})
-	case *operator.FieldName:
-		return e.resolveAlias(expr.Name)
-	case operator.FieldName:
+		return e.NormalizeDocument(bson.D{{Key: e.resolveAlias(expr.FieldName.Name), Value: e.NormalizeStatement(expr.Query)}})
+	case expression.FieldName:
 		return e.resolveAlias(expr.Name)
 	}
 
-	rep := expression.ToRepr()
+	rep := statement.ToRepr()
 	switch rep := rep.(type) {
 	case bson.A:
 		return e.NormalizeArray(rep)

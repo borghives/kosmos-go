@@ -1,8 +1,8 @@
-package operator
+package expression
 
 import "go.mongodb.org/mongo-driver/v2/bson"
 
-type Expression interface {
+type Base interface {
 	ToRepr() any
 }
 

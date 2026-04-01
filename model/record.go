@@ -15,7 +15,7 @@ type EntityRecord[T Observable] struct {
 
 func (r *EntityRecord[T]) Filter(filter QueryPredicate) *EntityRecord[T] {
 
-	r.stages = r.stages.Match(r.Type.NormalizeExpression(filter).(bson.D))
+	r.stages = r.stages.Match(r.Type.NormalizeStatement(filter).(bson.D))
 	return r
 }
 
