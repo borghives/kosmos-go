@@ -91,10 +91,13 @@ func TestFilterPredicate(t *testing.T) {
 
 func TestFilterIn(t *testing.T) {
 	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
+	id2, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ed")
+
+	ids := []bson.ObjectID{id, id2}
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		km.Fld("_id").In(id),
+		km.Fld("_id").ID().In(ids...),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")

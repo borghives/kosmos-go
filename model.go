@@ -49,17 +49,17 @@ func (e BaseModel) InitialObserved() time.Time {
 	return e.CreatedTime
 }
 
-func Fld(name string) observation.QueryField {
-	return observation.QueryField{Name: name}
+func Fld(name string) observation.EntityField {
+	return observation.EntityField{Name: name}
 }
 
-func Filter[T model.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityQuery[T] {
+func Filter[T model.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
 	return All[T]().Filter(filters...)
 }
 
-func All[T model.Observable]() *observation.EntityQuery[T] {
+func All[T model.Observable]() *observation.EntityDetector[T] {
 	var template T
-	tracker := &observation.EntityQuery[T]{
+	tracker := &observation.EntityDetector[T]{
 		Type: model.GetMetadata(template),
 	}
 	return tracker
