@@ -18,19 +18,18 @@ type EntityObserver[T model.Collapsable] struct {
 }
 
 func (r *EntityObserver[T]) dataCollection() *mongo.Collection {
-	observer := SummonMongo(PurposeAffinityObserver)
-	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
+	return SummonMongo(PurposeAffinityObserver).Collection(r.Type.CollectionName)
 }
 
-func (r *EntityObserver[T]) Witness(object T) {
+func (r *EntityObserver[T]) Witness(object T) error {
 	scope := object.WitnessScope()
 	isEntangled := object.IsEntangled()
 	ripple := object.Collapse()
 
 	// if no impact scope to filter by and not entangled, it's a new record
 	if len(scope) == 0 && !isEntangled {
-		r.dataCollection().InsertOne(context.Background(), object)
-		return
+		_, err := r.dataCollection().InsertOne(context.Background(), object)
+		return err
 	}
 
 	// if entangled, use the collapse id as scope
@@ -42,5 +41,6 @@ func (r *EntityObserver[T]) Witness(object T) {
 	update = append(update, ripple...) // add ripple affect to update
 
 	updateOption := options.UpdateOne().SetUpsert(true)
-	r.dataCollection().UpdateOne(context.Background(), scope, update, updateOption)
+	_, err := r.dataCollection().UpdateOne(context.Background(), scope, update, updateOption)
+	return err
 }

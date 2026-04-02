@@ -27,9 +27,9 @@ type Collapsable interface {
 }
 
 type Metadata struct {
-	DatabaseName   string
-	CollectionName string
-	FieldMap       map[string]string
+	CollectionName  string
+	DataverseBranch string
+	FieldMap        map[string]string
 }
 
 func GetMetadata(obj any) Metadata {
@@ -48,10 +48,28 @@ func GetMetadata(obj any) Metadata {
 	fieldMap := make(map[string]string)
 	populateFieldMap(t, fieldMap)
 
+	var collectionName string
+	var dataverseBranch string
+	modelKosmosString := field.Tag.Get("kosmos")
+	kosmosParts := strings.Split(modelKosmosString, ",")
+	if len(kosmosParts) > 0 {
+		// handle dataverse and collection the first part of the kosmos string
+		dataParts := strings.Split(kosmosParts[0], ":")
+
+		if len(dataParts) == 1 {
+			collectionName = dataParts[0]
+		} else if len(dataParts) == 2 {
+			dataverseBranch = dataParts[0]
+			collectionName = dataParts[1]
+		} else {
+			log.Fatalf("model.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
+		}
+	}
+
 	return Metadata{
-		DatabaseName:   field.Tag.Get("kdb"),
-		CollectionName: field.Tag.Get("kcol"),
-		FieldMap:       fieldMap,
+		CollectionName:  collectionName,
+		DataverseBranch: dataverseBranch,
+		FieldMap:        fieldMap,
 	}
 }
 

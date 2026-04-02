@@ -85,8 +85,17 @@ func CollapseMongoURISecret(uri string) (string, error) {
 	return fmt.Sprintf("%s://%s:%s%s", scheme, user, pass, hostAndPath), nil
 }
 
+func CollapseMainDatabaseName() string {
+	constants := ether.CollapseDataverseConstants()
+
+	if constants.Database == "" {
+		log.Fatalf("Main Database (MONGODB_DATABASE) is not set")
+	}
+	return constants.Database
+}
+
 func CollapseURIFor(purpose PurposeAffinity) (string, error) {
-	constants := ether.CollapseObserverConstants()
+	constants := ether.CollapseDataverseConstants()
 	if constants.CmdUri != "" {
 		return CollapseMongoURISecret(constants.CmdUri)
 	}
@@ -108,7 +117,7 @@ func kv(key string, value any) bson.E {
 	return bson.E{Key: key, Value: value}
 }
 
-type MongoObserver struct {
+type MongoDataverse struct {
 	clientOption *options.ClientOptions
 	client       *mongo.Client
 	purpose      PurposeAffinity
@@ -155,22 +164,22 @@ func (r *MemberResponsibility) ToMongoRoles() []MongoRole {
 }
 
 var (
-	mongoObservers     [PurposeAffinityCount]*MongoObserver
+	mongoObservers     [PurposeAffinityCount]*MongoDataverse
 	mongoObserversOnce [PurposeAffinityCount]sync.Once
 )
 
-func SummonMongo(purpose PurposeAffinity) *MongoObserver {
+func SummonMongo(purpose PurposeAffinity) *MongoDataverse {
 	mongoObserversOnce[purpose].Do(func() {
 		clientOptions, err := coalesceMongoOptionsFor(purpose)
 		if err != nil {
 			log.Fatalf("Failed to coalesce mongo options for purpose %v: %v", purpose, err)
 		}
-		mongoObservers[purpose] = &MongoObserver{clientOption: clientOptions, purpose: purpose}
+		mongoObservers[purpose] = &MongoDataverse{clientOption: clientOptions, purpose: purpose}
 	})
 	return mongoObservers[purpose]
 }
 
-func (m *MongoObserver) Client() *mongo.Client {
+func (m *MongoDataverse) Client() *mongo.Client {
 	if m.client == nil {
 		var err error
 		m.client, err = m.Connect()
@@ -181,7 +190,7 @@ func (m *MongoObserver) Client() *mongo.Client {
 	return m.client
 }
 
-func (m *MongoObserver) Connect() (*mongo.Client, error) {
+func (m *MongoDataverse) Connect() (*mongo.Client, error) {
 	client, err := tryConnectMongo(m.clientOption, 10)
 	if err != nil {
 		return nil, err
@@ -190,7 +199,7 @@ func (m *MongoObserver) Connect() (*mongo.Client, error) {
 	return client, nil
 }
 
-func (m *MongoObserver) Close() {
+func (m *MongoDataverse) Close() {
 	if m.client != nil {
 		err := m.client.Disconnect(context.Background())
 		if err != nil {
@@ -200,7 +209,7 @@ func (m *MongoObserver) Close() {
 	}
 }
 
-func (m *MongoObserver) ListMembers() (*MembersInfoResponse, error) {
+func (m *MongoDataverse) ListMembers() (*MembersInfoResponse, error) {
 	usersInfoCmd := bson.D{kv("usersInfo", 1)}
 
 	var result MembersInfoResponse
@@ -212,7 +221,7 @@ func (m *MongoObserver) ListMembers() (*MembersInfoResponse, error) {
 	return &result, nil
 }
 
-func (m *MongoObserver) RemoveMember(name string) error {
+func (m *MongoDataverse) RemoveMember(name string) error {
 	usersInfoCmd := bson.D{kv("dropUser", name)}
 
 	var result bson.M
@@ -224,7 +233,7 @@ func (m *MongoObserver) RemoveMember(name string) error {
 	return nil
 }
 
-func (m *MongoObserver) UpdateMember(name string, newPassword string, responsibility MemberResponsibility, upsert bool) error {
+func (m *MongoDataverse) UpdateMember(name string, newPassword string, responsibility MemberResponsibility, upsert bool) error {
 	if newPassword == "" {
 		return fmt.Errorf("Cannot set empty password\n")
 	}
@@ -289,7 +298,7 @@ type MongoStatus struct {
 	ServerStatus ServerStatus
 }
 
-func (m *MongoObserver) Status() (*MongoStatus, error) {
+func (m *MongoDataverse) Status() (*MongoStatus, error) {
 	var status MongoStatus
 	err := m.runAdministrativeCommand(bson.D{kv("replSetGetStatus", 1)}).Decode(&status.RSStatus)
 	if err != nil {
@@ -302,9 +311,25 @@ func (m *MongoObserver) Status() (*MongoStatus, error) {
 	return &status, nil
 }
 
-func (m *MongoObserver) ReelectPrimary() error {
+func (m *MongoDataverse) ReelectPrimary() error {
 	return m.runAdministrativeCommand(bson.D{kv("replSetStepDown", 60)}).Err()
 
+}
+
+func (m *MongoDataverse) AdminDatabase() *mongo.Database {
+	return m.Client().Database("admin")
+}
+
+func (m *MongoDataverse) MainDatabase() *mongo.Database {
+	return m.Client().Database(CollapseMainDatabaseName())
+}
+
+func (m *MongoDataverse) Collection(name string) *mongo.Collection {
+	return m.MainDatabase().Collection(name)
+}
+
+func (m *MongoDataverse) runAdministrativeCommand(cmd bson.D) *mongo.SingleResult {
+	return m.AdminDatabase().RunCommand(context.Background(), cmd)
 }
 
 type mongoDialerWrapper struct {
@@ -318,14 +343,6 @@ func (m *mongoDialerWrapper) DialContext(ctx context.Context, network, addr stri
 		return cd.DialContext(ctx, network, addr)
 	}
 	return m.dialer.Dial(network, addr)
-}
-
-func (m *MongoObserver) Database(name string) *mongo.Database {
-	return m.Client().Database(name)
-}
-
-func (m *MongoObserver) runAdministrativeCommand(cmd bson.D) *mongo.SingleResult {
-	return m.Database("admin").RunCommand(context.Background(), cmd)
 }
 
 func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, error) {

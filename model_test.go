@@ -11,7 +11,7 @@ import (
 )
 
 type TestModel struct {
-	km.BaseModel `bson:",inline" kdb:"test_db" kcol:"test_coll"`
+	km.BaseModel `bson:",inline" kosmos:"test_coll"`
 	Name         string `bson:"name"`
 }
 
@@ -37,10 +37,6 @@ func TestFilter(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	// Verify that the metadata was extracted properly
-	if record.Type.DatabaseName != "test_db" {
-		t.Errorf("expected database name 'test_db', got '%s'", record.Type.DatabaseName)
-	}
 	if record.Type.CollectionName != "test_coll" {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
@@ -72,10 +68,6 @@ func TestFilterPredicate(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	// Verify that the metadata was extracted properly
-	if record.Type.DatabaseName != "test_db" {
-		t.Errorf("expected database name 'test_db', got '%s'", record.Type.DatabaseName)
-	}
 	if record.Type.CollectionName != "test_coll" {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
@@ -109,10 +101,6 @@ func TestFilterIn(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	// Verify that the metadata was extracted properly
-	if record.Type.DatabaseName != "test_db" {
-		t.Errorf("expected database name 'test_db', got '%s'", record.Type.DatabaseName)
-	}
 	if record.Type.CollectionName != "test_coll" {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
@@ -139,11 +127,11 @@ func TestFilterPointer(t *testing.T) {
 		}
 	}()
 	// Create a filter with pointer T
-	record := kosmos.Filter[*TestModel](
+	detector := kosmos.Filter[*TestModel](
 		km.Fld("_id").Eq(bson.NewObjectID()),
 	)
-	if record.Type.DatabaseName != "test_db" {
-		t.Errorf("expected test_db, got %s", record.Type.DatabaseName)
+	if detector.Type.CollectionName != "test_coll" {
+		t.Errorf("expected test_coll, got %s", detector.Type.CollectionName)
 	}
 }
 

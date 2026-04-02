@@ -8,37 +8,39 @@ import (
 )
 
 var (
-	mongoObserverConstants *MongoObserverConstants
-	mongoObserverOnce      sync.Once
+	mongoConstants *MongoConstants
+	mongoOnce      sync.Once
 )
 
-func CollapseObserverConstants() *MongoObserverConstants {
-	mongoObserverOnce.Do(func() {
+func CollapseDataverseConstants() *MongoConstants {
+	mongoOnce.Do(func() {
 		CollapseConstants()
-		mongoObserverConstants = &MongoObserverConstants{}
-		mongoObserverConstants.Coalesce()
+		mongoConstants = &MongoConstants{}
+		mongoConstants.Coalesce()
 	})
-	return mongoObserverConstants
+	return mongoConstants
 }
 
-type MongoObserverConstants struct {
+type MongoConstants struct {
 	CmdUri     string // <-- comes from App's Command URI
 	Uri        string `mapstructure:"MONGODB_URI"`
 	AdminUri   string `mapstructure:"MONGODB_ADMIN_URI"`
 	CreatorUri string `mapstructure:"MONGODB_CREATOR_URI"`
+	Database   string `mapstructure:"MONGODB_DATABASE"`
 }
 
-func (c *MongoObserverConstants) Coalesce() Ether {
+func (c *MongoConstants) Coalesce() Ether {
 	viper.BindEnv("MONGODB_URI")
 	viper.BindEnv("MONGODB_ADMIN_URI")
 	viper.BindEnv("MONGODB_CREATOR_URI")
+	viper.BindEnv("MONGODB_DATABASE")
 	viper.AutomaticEnv()
 	viper.Unmarshal(&c)
 
 	return c
 }
 
-func (c *MongoObserverConstants) MergeFromFile(filename string) Ether {
+func (c *MongoConstants) MergeFromFile(filename string) Ether {
 	// 1. look for addition environment file
 	viper.SetConfigFile(filename)
 	_ = viper.MergeInConfig()
@@ -46,7 +48,7 @@ func (c *MongoObserverConstants) MergeFromFile(filename string) Ether {
 	return c
 }
 
-func (c *MongoObserverConstants) MergeFromCmd(cmd *cobra.Command) Ether {
+func (c *MongoConstants) MergeFromCmd(cmd *cobra.Command) Ether {
 	if flag := cmd.Flags().Lookup("uri"); flag != nil {
 		viper.BindPFlag("MONGODB_URI", flag)
 		c.CmdUri = flag.Value.String()

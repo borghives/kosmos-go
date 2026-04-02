@@ -76,8 +76,7 @@ func (r *EntityDetector[T]) PullAll() ([]T, error) {
 }
 
 func (r *EntityDetector[T]) dataCollection() *mongo.Collection {
-	observer := SummonMongo(PurposeAffinityObserver)
-	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
+	return SummonMongo(PurposeAffinityObserver).Collection(r.Type.CollectionName)
 }
 
 func (r *EntityDetector[T]) PipelineJSON() string {
@@ -85,10 +84,10 @@ func (r *EntityDetector[T]) PipelineJSON() string {
 }
 
 func (r *EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
-	infoCollection := r.dataCollection()
+	dataCollection := r.dataCollection()
 
 	stages := r.stages.AppendFrom(postStages)
-	cursor, err := infoCollection.Aggregate(ctx, stages.Pipeline())
+	cursor, err := dataCollection.Aggregate(ctx, stages.Pipeline())
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate %v: %v", stages.JsonString(), err)
 	}
