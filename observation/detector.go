@@ -54,23 +54,25 @@ func (r *EntityDetector[T]) Sort(field string, descending bool) *EntityDetector[
 	return r
 }
 
-func (r *EntityDetector[T]) PullOne() *T {
-	results, err := r.pullPipeline(Aggregation{}.Limit(1))
+func (r *EntityDetector[T]) PullOne() (*T, error) {
+	results, err := r.pullPipeline(context.Background(), Aggregation{}.Limit(1))
 	if err != nil {
-		return nil
+		return nil, err
 	}
+
 	if len(results) == 0 {
-		return nil
+		return nil, nil
 	}
-	return &results[0]
+
+	return &results[0], nil
 }
 
-func (r *EntityDetector[T]) PullAll() []T {
-	results, err := r.pullPipeline(Aggregation{})
+func (r *EntityDetector[T]) PullAll() ([]T, error) {
+	results, err := r.pullPipeline(context.Background(), Aggregation{})
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return results
+	return results, nil
 }
 
 func (r *EntityDetector[T]) dataCollection() *mongo.Collection {
@@ -82,17 +84,21 @@ func (r *EntityDetector[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r *EntityDetector[T]) pullPipeline(postStages Aggregation) ([]T, error) {
-	collection := r.dataCollection()
-	pipeline := r.stages.AppendFrom(postStages).Pipeline()
-	fmt.Println(r.stages.AppendFrom(postStages).JsonString())
-	cursor, err := collection.Aggregate(context.Background(), pipeline)
+func (r *EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
+	infoCollection := r.dataCollection()
+
+	stages := r.stages.AppendFrom(postStages)
+	cursor, err := infoCollection.Aggregate(ctx, stages.Pipeline())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to aggregate %v: %v", stages.JsonString(), err)
 	}
-	defer cursor.Close(context.Background())
+	defer cursor.Close(ctx)
 
 	var results []T
-	cursor.All(context.Background(), &results)
+	err = cursor.All(ctx, &results)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode results: %v", err)
+	}
+
 	return results, nil
 }

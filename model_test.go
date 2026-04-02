@@ -45,7 +45,10 @@ func TestFilter(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
 
-	obj := record.PullOne()
+	obj, err := record.PullOne()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 	if obj == nil {
 		t.Fatalf("expected object to not be nil")
 	}
@@ -77,7 +80,10 @@ func TestFilterPredicate(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
 
-	obj := record.PullOne()
+	obj, err := record.PullOne()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 	if obj == nil {
 		t.Fatalf("expected object to not be nil")
 	}
@@ -111,7 +117,10 @@ func TestFilterIn(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
 	}
 
-	obj := record.PullOne()
+	obj, err := record.PullOne()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 	if obj == nil {
 		t.Fatalf("expected object to not be nil")
 	}
