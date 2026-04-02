@@ -62,8 +62,8 @@ func TestFilterPredicate(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		km.Fld("_id").Eq(id),
-		km.Fld("name").Eq("MAGIC"),
+		km.Fld("_id").ID().Eq(id),
+		km.Fld("name").Str().Eq("MAGIC"),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")

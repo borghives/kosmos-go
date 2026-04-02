@@ -13,6 +13,10 @@ type EntityIDField struct {
 	EntityField
 }
 
+type EntityStringField struct {
+	EntityField
+}
+
 func (q EntityField) wrapFieldName() expression.FieldName {
 	return expression.FieldName{Name: q.Name}
 }
@@ -76,15 +80,11 @@ func (q EntityField) ID() EntityIDField {
 	return EntityIDField{EntityField: q}
 }
 
-func (q EntityIDField) Eq(value bson.ObjectID) expression.QueryFieldPredicate {
-	litValue := q.literal(value)
-	return q.ToQueryPredicate(expression.Eq(litValue))
+func (q EntityField) Str() EntityStringField {
+	return EntityStringField{EntityField: q}
 }
 
-func (q EntityIDField) Ne(value bson.ObjectID) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Ne(q.literal(value)))
-}
-
+// --- Entity ID Field ---
 func (q EntityIDField) In(values ...bson.ObjectID) expression.QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.In(q.literalSlice(values)))
 }
@@ -94,6 +94,24 @@ func (q EntityIDField) Nin(values ...bson.ObjectID) expression.QueryFieldPredica
 }
 
 func (q EntityIDField) literalSlice(values []bson.ObjectID) bson.A {
+	literals := make(bson.A, len(values))
+	for i, v := range values {
+		literals[i] = q.literal(v)
+	}
+	return literals
+}
+
+// --- Entity String Field ---
+
+func (q EntityStringField) In(values ...string) expression.QueryFieldPredicate {
+	return q.ToQueryPredicate(expression.In(q.literalSlice(values)))
+}
+
+func (q EntityStringField) Nin(values ...string) expression.QueryFieldPredicate {
+	return q.ToQueryPredicate(expression.Nin(q.literalSlice(values)))
+}
+
+func (q EntityStringField) literalSlice(values []string) bson.A {
 	literals := make(bson.A, len(values))
 	for i, v := range values {
 		literals[i] = q.literal(v)
