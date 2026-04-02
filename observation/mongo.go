@@ -85,6 +85,36 @@ func CollapseMongoURISecret(uri string) (string, error) {
 	return fmt.Sprintf("%s://%s:%s%s", scheme, user, pass, hostAndPath), nil
 }
 
+func MaskMongoURI(uri string) (string, error) {
+	// 1. Isolate the scheme
+	schemeSplit := strings.SplitN(uri, "://", 2)
+	if len(schemeSplit) != 2 {
+		return "", fmt.Errorf("invalid URI format")
+	}
+	scheme, remainder := schemeSplit[0], schemeSplit[1]
+
+	// 2. Find the end of the credentials (the LAST '@' before any '/' or '?')
+	// This is important because passwords themselves can contain '@' if encoded,
+	// but the delimiter between creds and hosts is the final '@'.
+	endOfCreds := strings.LastIndex(remainder, "@")
+	if endOfCreds == -1 {
+		return uri, nil // No credentials found no need to mask
+	}
+
+	creds := remainder[:endOfCreds]
+	hostAndPath := remainder[endOfCreds:] // Includes the '@'
+
+	// 3. Split User and Password
+	userAuth := strings.SplitN(creds, ":", 2)
+	if len(userAuth) < 2 {
+		return uri, nil // Only user, no password no need to mask
+	}
+
+	user, _ := userAuth[0], userAuth[1]
+
+	return fmt.Sprintf("%s://%s:****%s", scheme, user, hostAndPath), nil
+}
+
 func CollapseMainDatabaseName() string {
 	constants := ether.CollapseDataverseConstants()
 
