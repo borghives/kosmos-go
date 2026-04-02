@@ -49,6 +49,10 @@ func (e BaseModel) InitialObserved() time.Time {
 	return e.CreatedTime
 }
 
+func Fld(name string) observation.QueryField {
+	return observation.QueryField{Name: name}
+}
+
 func Filter[T model.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityQuery[T] {
 	return All[T]().Filter(filters...)
 }

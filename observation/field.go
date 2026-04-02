@@ -5,10 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func Fld(name string) QueryField {
-	return QueryField{Name: name}
-}
-
 type QueryField struct {
 	Name string
 }

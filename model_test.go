@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/borghives/kosmos-go"
+	km "github.com/borghives/kosmos-go"
 	"github.com/borghives/kosmos-go/model"
-	ko "github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type TestModel struct {
-	kosmos.BaseModel `bson:",inline" kdb:"test_db" kcol:"test_coll"`
-	Name             string `bson:"name"`
+	km.BaseModel `bson:",inline" kdb:"test_db" kcol:"test_coll"`
+	Name         string `bson:"name"`
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
@@ -31,7 +31,7 @@ func TestFilter(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		ko.Fld("_id").Eq(id),
+		km.Fld("_id").Eq(id),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
@@ -62,8 +62,8 @@ func TestFilterPredicate(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		ko.Fld("_id").Eq(id),
-		ko.Fld("name").Eq("MAGIC"),
+		km.Fld("_id").Eq(id),
+		km.Fld("name").Eq("MAGIC"),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
@@ -94,7 +94,7 @@ func TestFilterIn(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		ko.Fld("_id").In(id),
+		km.Fld("_id").In(id),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
@@ -128,7 +128,7 @@ func TestFilterPointer(t *testing.T) {
 	}()
 	// Create a filter with pointer T
 	record := kosmos.Filter[*TestModel](
-		ko.Fld("_id").Eq(bson.NewObjectID()),
+		km.Fld("_id").Eq(bson.NewObjectID()),
 	)
 	if record.Type.DatabaseName != "test_db" {
 		t.Errorf("expected test_db, got %s", record.Type.DatabaseName)
@@ -139,8 +139,8 @@ func TestNormalizeDocument(t *testing.T) {
 	meta := model.GetMetadata(TestModel{})
 
 	// Create an expression that should trigger FieldName rewrite.
-	exprID := ko.Fld("ID").Eq(123)
-	exprName := ko.Fld("Name").Eq("MAGIC")
+	exprID := km.Fld("ID").Eq(123)
+	exprName := km.Fld("Name").Eq("MAGIC")
 
 	// Test that 'ID' and 'Name' are mapped to '_id' and 'name' ONLY when used via Expressions.
 	// Raw string keys should NOT be mapped.
@@ -199,17 +199,17 @@ func TestBaseModelCollapseID(t *testing.T) {
 }
 
 func TestFilterOperators(t *testing.T) {
-	record := kosmos.Filter[TestModel](ko.Fld("age").Gt(18)).Sort("name", false)
+	record := kosmos.Filter[TestModel](km.Fld("age").Gt(18)).Sort("name", false)
 	json := record.PipelineJSON()
 	if json == "" {
 		t.Error("expected valid pipeline json")
 	}
 
 	// Just invoke other operators to ensure they build correctly without panic
-	ko.Fld("age").Gte(18)
-	ko.Fld("age").Lt(18)
-	ko.Fld("age").Lte(18)
-	ko.Fld("age").Ne(18)
-	ko.Fld("status").In("active", "pending")
-	ko.Fld("status").Nin("banned")
+	km.Fld("age").Gte(18)
+	km.Fld("age").Lt(18)
+	km.Fld("age").Lte(18)
+	km.Fld("age").Ne(18)
+	km.Fld("status").In("active", "pending")
+	km.Fld("status").Nin("banned")
 }
