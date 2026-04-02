@@ -2,6 +2,7 @@ package observation
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/borghives/kosmos-go/model"
 	"github.com/borghives/kosmos-go/observation/expression"
@@ -20,11 +21,11 @@ func (r *EntityQuery[T]) Filter(filters ...expression.QueryFieldPredicate) *Enti
 	} else if len(filters) == 1 {
 		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
 	} else {
-		exprs := make([]expression.Base, len(filters))
+		exprs := make(bson.A, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs...), r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.Type.ResolveAlias).(bson.D))
 	}
 	return r
 }
@@ -35,11 +36,11 @@ func (r *EntityQuery[T]) FilterEither(filters ...expression.QueryFieldPredicate)
 	} else if len(filters) == 1 {
 		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
 	} else {
-		exprs := make([]expression.Base, len(filters))
+		exprs := make(bson.A, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs...), r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.Type.ResolveAlias).(bson.D))
 	}
 	return r
 }
@@ -84,7 +85,7 @@ func (r *EntityQuery[T]) PipelineJSON() string {
 func (r *EntityQuery[T]) pullPipeline(postStages Aggregation) ([]T, error) {
 	collection := r.dataCollection()
 	pipeline := r.stages.AppendFrom(postStages).Pipeline()
-
+	fmt.Println(r.stages.AppendFrom(postStages).JsonString())
 	cursor, err := collection.Aggregate(context.Background(), pipeline)
 	if err != nil {
 		return nil, err

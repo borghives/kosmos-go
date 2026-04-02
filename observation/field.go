@@ -2,6 +2,7 @@ package observation
 
 import (
 	"github.com/borghives/kosmos-go/observation/expression"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func Fld(name string) QueryField {
@@ -23,50 +24,50 @@ func (q QueryField) ToQueryPredicate(queryOp expression.QueryOp) expression.Quer
 	}
 }
 
-func (q QueryField) LiteralSlice(values []any) []expression.LiteralValue {
-	literals := make([]expression.LiteralValue, len(values))
+func (q QueryField) literalSlice(values []any) bson.A {
+	literals := make(bson.A, len(values))
 	for i, v := range values {
-		literals[i] = q.Literal(v)
+		literals[i] = q.literal(v)
 	}
 	return literals
 }
 
-func (q QueryField) Literal(value any) expression.LiteralValue {
+func (q QueryField) literal(value any) expression.LiteralValue {
 	return expression.LiteralValue{
-		Value: value,
-		Field: q.Name,
+		Value:   value,
+		Context: q.wrapFieldName(),
 	}
 }
 
 func (q QueryField) Eq(value any) expression.QueryFieldPredicate {
-	litValue := q.Literal(value)
+	litValue := q.literal(value)
 	return q.ToQueryPredicate(expression.Eq(litValue))
 }
 
 func (q QueryField) Ne(value any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Ne(q.Literal(value)))
+	return q.ToQueryPredicate(expression.Ne(q.literal(value)))
 }
 
 func (q QueryField) Gt(value any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Gt(q.Literal(value)))
+	return q.ToQueryPredicate(expression.Gt(q.literal(value)))
 }
 
 func (q QueryField) Gte(value any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Gte(q.Literal(value)))
+	return q.ToQueryPredicate(expression.Gte(q.literal(value)))
 }
 
 func (q QueryField) Lt(value any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Lt(q.Literal(value)))
+	return q.ToQueryPredicate(expression.Lt(q.literal(value)))
 }
 
 func (q QueryField) Lte(value any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Lte(q.Literal(value)))
+	return q.ToQueryPredicate(expression.Lte(q.literal(value)))
 }
 
 func (q QueryField) In(values ...any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.In(q.LiteralSlice(values)))
+	return q.ToQueryPredicate(expression.In(q.literalSlice(values)))
 }
 
 func (q QueryField) Nin(values ...any) expression.QueryFieldPredicate {
-	return q.ToQueryPredicate(expression.Nin(q.LiteralSlice(values)))
+	return q.ToQueryPredicate(expression.Nin(q.literalSlice(values)))
 }

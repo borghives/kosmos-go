@@ -8,6 +8,10 @@ type Base interface {
 	ToRepr() any
 }
 
+type Reducible interface {
+	Reduce(resolver NameResolver) any
+}
+
 type FieldName struct {
 	Name string
 }
@@ -16,12 +20,20 @@ func (f FieldName) ToRepr() any {
 	return f.Name
 }
 
+func (f FieldName) Reduce(resolver NameResolver) any {
+	return resolver(f.Name)
+}
+
 type LiteralValue struct {
-	Value any
-	Field string
+	Value   any
+	Context FieldName
 }
 
 func (l LiteralValue) ToRepr() any {
+	return l.Value
+}
+
+func (l LiteralValue) Reduce(resolver NameResolver) any {
 	return l.Value
 }
 
@@ -32,36 +44,33 @@ func kv(key string, value any) bson.E {
 // --- Normalize Expression ---
 type NameResolver func(string) string
 
-func NormalizeExpression(expr Base, resolver NameResolver) any {
-	switch exprType := expr.(type) {
-	case QueryFieldPredicate:
-		return NormalizeDocument(bson.D{{Key: resolver(exprType.FieldName.Name), Value: NormalizeExpression(exprType.Query, resolver)}}, resolver)
-	case FieldName:
-		return resolver(exprType.Name)
+func NormalizeExpression(expr any, resolver NameResolver) any {
+	if expr, ok := expr.(Reducible); ok {
+		return expr.Reduce(resolver)
 	}
 
-	rep := expr.ToRepr()
-	switch rep := rep.(type) {
+	switch rep := expr.(type) {
 	case bson.A:
 		return NormalizeArray(rep, resolver)
 	case bson.D:
 		return NormalizeDocument(rep, resolver)
+	case Base:
+		return NormalizeExpression(rep.ToRepr(), resolver)
+	default:
+		return rep
 	}
-	return rep
 }
 
 func NormalizeDocument(document bson.D, resolver NameResolver) bson.D {
 	newD := make(bson.D, 0, len(document))
 	for _, v := range document {
 		switch val := v.Value.(type) {
-		case Base:
-			newD = append(newD, kv(v.Key, NormalizeExpression(val, resolver)))
 		case bson.D:
 			newD = append(newD, kv(v.Key, NormalizeDocument(val, resolver)))
 		case bson.A:
 			newD = append(newD, kv(v.Key, NormalizeArray(val, resolver)))
 		default:
-			newD = append(newD, v)
+			newD = append(newD, kv(v.Key, NormalizeExpression(val, resolver)))
 		}
 	}
 	return newD

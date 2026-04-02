@@ -11,6 +11,10 @@ func (q QueryFieldPredicate) ToRepr() any {
 	return bson.D{kv(q.FieldName.Name, q.Query.ToRepr())}
 }
 
+func (q QueryFieldPredicate) Reduce(resolver NameResolver) any {
+	return bson.D{kv(resolver(q.FieldName.Name), NormalizeExpression(q.Query, resolver))}
+}
+
 type QueryOp struct {
 	Operator string
 	Value    any
@@ -44,26 +48,18 @@ func Lte(value any) QueryOp {
 	return QueryOp{"$lte", value}
 }
 
-func In(value any) QueryOp {
-	return QueryOp{"$in", value}
+func In(values bson.A) QueryOp {
+	return QueryOp{"$in", values}
 }
 
-func Nin(value any) QueryOp {
-	return QueryOp{"$nin", value}
+func Nin(values bson.A) QueryOp {
+	return QueryOp{"$nin", values}
 }
 
-func And(values ...Base) QueryOp {
-	valuesA := make(bson.A, len(values))
-	for i, v := range values {
-		valuesA[i] = v
-	}
-	return QueryOp{"$and", valuesA}
+func And(values bson.A) QueryOp {
+	return QueryOp{"$and", values}
 }
 
-func Or(values ...Base) QueryOp {
-	valuesA := make(bson.A, len(values))
-	for i, v := range values {
-		valuesA[i] = v
-	}
-	return QueryOp{"$or", valuesA}
+func Or(values bson.A) QueryOp {
+	return QueryOp{"$or", values}
 }
