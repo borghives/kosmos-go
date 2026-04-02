@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/borghives/kosmos-go"
-	km "github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/model"
+	ko "github.com/borghives/kosmos-go/observation"
+	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -14,8 +16,8 @@ type TestModel struct {
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
-var _ km.Observable = TestModel{}
-var _ km.Observable = (*TestModel)(nil)
+var _ model.Observable = TestModel{}
+var _ model.Observable = (*TestModel)(nil)
 
 func TestWitness(t *testing.T) {
 	m := TestModel{
@@ -29,7 +31,7 @@ func TestFilter(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		km.Fld("_id").Eq(id),
+		ko.Fld("_id").Eq(id),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
@@ -60,8 +62,8 @@ func TestFilterPredicate(t *testing.T) {
 
 	// Create a filter matching the id
 	record := kosmos.Filter[TestModel](
-		km.Fld("_id").Eq(id),
-		km.Fld("name").Eq("MAGIC"),
+		ko.Fld("_id").Eq(id),
+		ko.Fld("name").Eq("MAGIC"),
 	)
 	if record == nil {
 		t.Fatalf("expected record to not be nil")
@@ -94,7 +96,7 @@ func TestFilterPointer(t *testing.T) {
 	}()
 	// Create a filter with pointer T
 	record := kosmos.Filter[*TestModel](
-		km.Fld("_id").Eq(bson.NewObjectID()),
+		ko.Fld("_id").Eq(bson.NewObjectID()),
 	)
 	if record.Type.DatabaseName != "test_db" {
 		t.Errorf("expected test_db, got %s", record.Type.DatabaseName)
@@ -102,11 +104,11 @@ func TestFilterPointer(t *testing.T) {
 }
 
 func TestNormalizeDocument(t *testing.T) {
-	meta := km.GetMetadata(TestModel{})
+	meta := model.GetMetadata(TestModel{})
 
 	// Create an expression that should trigger FieldName rewrite.
-	exprID := km.Fld("ID").Eq(123)
-	exprName := km.Fld("Name").Eq("MAGIC")
+	exprID := ko.Fld("ID").Eq(123)
+	exprName := ko.Fld("Name").Eq("MAGIC")
 
 	// Test that 'ID' and 'Name' are mapped to '_id' and 'name' ONLY when used via Expressions.
 	// Raw string keys should NOT be mapped.
@@ -116,7 +118,7 @@ func TestNormalizeDocument(t *testing.T) {
 		{Key: "query", Value: bson.A{exprID, exprName}},
 	}
 
-	norm := meta.NormalizeDocument(doc)
+	norm := expression.NormalizeDocument(doc, meta.ResolveAlias)
 
 	// Check unmapped keys
 	if norm[0].Key != "ID" {
@@ -165,17 +167,17 @@ func TestBaseModelCollapseID(t *testing.T) {
 }
 
 func TestFilterOperators(t *testing.T) {
-	record := kosmos.Filter[TestModel](km.Fld("age").Gt(18)).Sort("name", false)
+	record := kosmos.Filter[TestModel](ko.Fld("age").Gt(18)).Sort("name", false)
 	json := record.PipelineJSON()
 	if json == "" {
 		t.Error("expected valid pipeline json")
 	}
 
 	// Just invoke other operators to ensure they build correctly without panic
-	km.Fld("age").Gte(18)
-	km.Fld("age").Lt(18)
-	km.Fld("age").Lte(18)
-	km.Fld("age").Ne(18)
-	km.Fld("status").In("active", "pending")
-	km.Fld("status").Nin("banned")
+	ko.Fld("age").Gte(18)
+	ko.Fld("age").Lt(18)
+	ko.Fld("age").Lte(18)
+	ko.Fld("age").Ne(18)
+	ko.Fld("status").In("active", "pending")
+	ko.Fld("status").Nin("banned")
 }

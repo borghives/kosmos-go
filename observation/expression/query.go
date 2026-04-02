@@ -2,6 +2,15 @@ package expression
 
 import "go.mongodb.org/mongo-driver/v2/bson"
 
+type QueryFieldPredicate struct {
+	FieldName FieldName
+	Query     QueryOp
+}
+
+func (q QueryFieldPredicate) ToRepr() any {
+	return bson.D{kv(q.FieldName.Name, q.Query.ToRepr())}
+}
+
 type QueryOp struct {
 	Operator string
 	Value    any

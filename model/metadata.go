@@ -5,10 +5,26 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"time"
 
-	"github.com/borghives/kosmos-go/model/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
+
+type Observable interface {
+	IsEntangled() bool
+	LastObserved() time.Time
+	InitialObserved() time.Time
+}
+
+type Scope bson.D
+type Ripple bson.D
+
+type Collapsable interface {
+	IsEntangled() bool
+	CollapseID() bson.ObjectID
+	Collapse() Ripple    //return the ripple side effect after the collapse.  This will implicitly collapse the ID
+	WitnessScope() Scope //return the scope to filter by
+}
 
 type Metadata struct {
 	DatabaseName   string
@@ -77,63 +93,11 @@ func populateFieldMap(t reflect.Type, m map[string]string) {
 	}
 }
 
-func (e *Metadata) resolveAlias(name string) string {
+func (e *Metadata) ResolveAlias(name string) string {
 	if e.FieldMap != nil {
 		if mapped, ok := e.FieldMap[name]; ok {
 			return mapped
 		}
 	}
 	return name
-}
-
-func (e *Metadata) NormalizeDocument(document bson.D) bson.D {
-	newD := make(bson.D, 0, len(document))
-	for _, v := range document {
-		switch val := v.Value.(type) {
-		case expression.Base:
-			newD = append(newD, kv(v.Key, e.NormalizeExpression(val)))
-		case bson.D:
-			newD = append(newD, kv(v.Key, e.NormalizeDocument(val)))
-		case bson.A:
-			newD = append(newD, kv(v.Key, e.NormalizeArray(val)))
-		default:
-			newD = append(newD, v)
-		}
-	}
-	return newD
-}
-
-func (e *Metadata) NormalizeArray(array bson.A) bson.A {
-	newA := make(bson.A, 0, len(array))
-	for _, v := range array {
-		switch val := v.(type) {
-		case expression.Base:
-			newA = append(newA, e.NormalizeExpression(val))
-		case bson.D:
-			newA = append(newA, e.NormalizeDocument(val))
-		case bson.A:
-			newA = append(newA, e.NormalizeArray(val))
-		default:
-			newA = append(newA, v)
-		}
-	}
-	return newA
-}
-
-func (e *Metadata) NormalizeExpression(expr expression.Base) any {
-	switch exprType := expr.(type) {
-	case QueryFieldPredicate:
-		return e.NormalizeDocument(bson.D{{Key: e.resolveAlias(exprType.FieldName.Name), Value: e.NormalizeExpression(exprType.Query)}})
-	case expression.FieldName:
-		return e.resolveAlias(exprType.Name)
-	}
-
-	rep := expr.ToRepr()
-	switch rep := rep.(type) {
-	case bson.A:
-		return e.NormalizeArray(rep)
-	case bson.D:
-		return e.NormalizeDocument(rep)
-	}
-	return rep
 }

@@ -1,4 +1,4 @@
-package model
+package observation
 
 import (
 	"encoding/json"
@@ -66,8 +66,4 @@ func (a Aggregation) JsonString() string {
 	}
 
 	return string(jsonString)
-}
-
-func kv(key string, value any) bson.E {
-	return bson.E{Key: key, Value: value}
 }

@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/observation"
+	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -27,7 +29,7 @@ func (e *BaseModel) CollapseID() bson.ObjectID {
 func (e *BaseModel) Collapse() model.Ripple {
 	e.CollapseID()
 	e.UpdatedTime = time.Now()
-	ripple := model.OnInsertRipple("created_time", e.CreatedTime)
+	ripple := observation.OnInsertRipple("created_time", e.CreatedTime)
 	return ripple
 }
 
@@ -47,20 +49,20 @@ func (e BaseModel) InitialObserved() time.Time {
 	return e.CreatedTime
 }
 
-func Filter[T model.Observable](filters ...model.QueryFieldPredicate) *model.EntityRecord[T] {
+func Filter[T model.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityQuery[T] {
 	return All[T]().Filter(filters...)
 }
 
-func All[T model.Observable]() *model.EntityRecord[T] {
+func All[T model.Observable]() *observation.EntityQuery[T] {
 	var template T
-	recording := &model.EntityRecord[T]{
+	tracker := &observation.EntityQuery[T]{
 		Type: model.GetMetadata(template),
 	}
-	return recording
+	return tracker
 }
 
 func Witness[C model.Collapsable](obj C) C {
-	observer := &model.EntityObserver[C]{
+	observer := &observation.EntityObserver[C]{
 		Type: model.GetMetadata(obj),
 	}
 	observer.Witness(obj)

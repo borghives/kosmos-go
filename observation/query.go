@@ -1,50 +1,50 @@
-package model
+package observation
 
 import (
 	"context"
 
-	"github.com/borghives/kosmos-go/model/expression"
-	"github.com/borghives/kosmos-go/observation"
+	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type EntityRecord[T Observable] struct {
-	Type   Metadata
+type EntityQuery[T model.Observable] struct {
+	Type   model.Metadata
 	stages Aggregation
 }
 
-func (r *EntityRecord[T]) Filter(filters ...QueryFieldPredicate) *EntityRecord[T] {
+func (r *EntityQuery[T]) Filter(filters ...expression.QueryFieldPredicate) *EntityQuery[T] {
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(r.Type.NormalizeExpression(filters[0]).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
 	} else {
 		exprs := make([]expression.Base, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(r.Type.NormalizeExpression(expression.And(exprs...)).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs...), r.Type.ResolveAlias).(bson.D))
 	}
 	return r
 }
 
-func (r *EntityRecord[T]) FilterEither(filters ...QueryFieldPredicate) *EntityRecord[T] {
+func (r *EntityQuery[T]) FilterEither(filters ...expression.QueryFieldPredicate) *EntityQuery[T] {
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(r.Type.NormalizeExpression(filters[0]).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
 	} else {
 		exprs := make([]expression.Base, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(r.Type.NormalizeExpression(expression.Or(exprs...)).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs...), r.Type.ResolveAlias).(bson.D))
 	}
 	return r
 }
 
-func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
+func (r *EntityQuery[T]) Sort(field string, descending bool) *EntityQuery[T] {
 	order := 1
 	if descending {
 		order = -1
@@ -53,7 +53,7 @@ func (r *EntityRecord[T]) Sort(field string, descending bool) *EntityRecord[T] {
 	return r
 }
 
-func (r *EntityRecord[T]) PullOne() *T {
+func (r *EntityQuery[T]) PullOne() *T {
 	results, err := r.pullPipeline(Aggregation{}.Limit(1))
 	if err != nil {
 		return nil
@@ -64,7 +64,7 @@ func (r *EntityRecord[T]) PullOne() *T {
 	return &results[0]
 }
 
-func (r *EntityRecord[T]) PullAll() []T {
+func (r *EntityQuery[T]) PullAll() []T {
 	results, err := r.pullPipeline(Aggregation{})
 	if err != nil {
 		return nil
@@ -72,16 +72,16 @@ func (r *EntityRecord[T]) PullAll() []T {
 	return results
 }
 
-func (r *EntityRecord[T]) dataCollection() *mongo.Collection {
-	observer := observation.SummonMongo(observation.PurposeAffinityObserver)
+func (r *EntityQuery[T]) dataCollection() *mongo.Collection {
+	observer := SummonMongo(PurposeAffinityObserver)
 	return observer.Database(r.Type.DatabaseName).Collection(r.Type.CollectionName)
 }
 
-func (r *EntityRecord[T]) PipelineJSON() string {
+func (r *EntityQuery[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r *EntityRecord[T]) pullPipeline(postStages Aggregation) ([]T, error) {
+func (r *EntityQuery[T]) pullPipeline(postStages Aggregation) ([]T, error) {
 	collection := r.dataCollection()
 	pipeline := r.stages.AppendFrom(postStages).Pipeline()
 
