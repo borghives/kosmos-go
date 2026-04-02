@@ -17,6 +17,6 @@ func SummonSecretManager() ether.SecretManager {
 	return ether.SummonSecretManager()
 }
 
-func SummonDataverseFor(purpose observation.PurposeAffinity) *observation.MongoDataverse {
+func SummonObservationFor(purpose observation.PurposeAffinity) *observation.MongoDataverse {
 	return observation.SummonMongo(purpose)
 }
