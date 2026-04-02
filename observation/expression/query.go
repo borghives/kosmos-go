@@ -60,6 +60,7 @@ func And(values bson.A) QueryOp {
 	return QueryOp{"$and", values}
 }
 
+// Or returns a query operator that matches documents that satisfy any of the specified conditions.
 func Or(values bson.A) QueryOp {
 	return QueryOp{"$or", values}
 }
