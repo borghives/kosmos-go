@@ -54,7 +54,7 @@ func GetMetadata(obj any) Metadata {
 	kosmosParts := strings.Split(modelKosmosString, ",")
 	if len(kosmosParts) > 0 {
 		// handle dataverse and collection the first part of the kosmos string
-		dataParts := strings.Split(kosmosParts[0], ":")
+		dataParts := strings.Split(kosmosParts[0], ">")
 
 		if len(dataParts) == 1 {
 			collectionName = dataParts[0]
