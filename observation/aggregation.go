@@ -2,6 +2,7 @@ package observation
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -53,16 +54,10 @@ func (a Aggregation) Pipeline() mongo.Pipeline {
 
 // mainly for debugging
 func (a Aggregation) JsonString() string {
-	// Convert pipeline to bson.A
-	bsonArray := bson.A{}
-	for _, stage := range a.pipeline {
-		bsonArray = append(bsonArray, stage)
-	}
-
 	// Marshal bson.A to JSON
-	jsonString, err := json.Marshal(bsonArray)
+	jsonString, err := json.Marshal(a.pipeline)
 	if err != nil {
-		panic(err)
+		return fmt.Sprintf("Error marshaling aggregation pipeline: %v", err)
 	}
 
 	return string(jsonString)

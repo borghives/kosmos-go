@@ -12,9 +12,9 @@ type EntityObserver[T Collapsible] struct {
 	EntityDataverse
 }
 
-func NewEntityObserver[T Collapsible](entity model.Metadata) *EntityObserver[T] {
+func NewEntityObserver[T Collapsible](entityMeta model.Metadata) *EntityObserver[T] {
 	return &EntityObserver[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: entity},
+		EntityDataverse: EntityDataverse{EntityMeta: entityMeta},
 	}
 }
 
