@@ -74,7 +74,7 @@ type SecretManager interface {
 	ListSecrets() ([]SecretInfo, error)
 	CreateSecret(name string) error
 	AddSecretVersion(name, payload string) error
-	IsSecretStale(name string, ttlHour int) bool
+	IsSecretStale(name string, ttlHour int) (bool, error)
 }
 
 // Load parses a .envsecret file and then loads all the variables found as environment variables.
@@ -234,7 +234,7 @@ func (m *GCPSecretManager) AddSecretVersion(name, payload string) error {
 	return err
 }
 
-func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) bool {
+func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) (bool, error) {
 	req := &secretmanagerpb.GetSecretVersionRequest{
 		Name: fmt.Sprintf("projects/%s/secrets/%s/versions/latest", m.ProjectID, name),
 	}
@@ -244,17 +244,17 @@ func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) bool {
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		log.Printf("failed to create secretmanager client: %v", err)
-		return false
+		return false, err
 	}
 	defer client.Close()
 
 	version, err := client.GetSecretVersion(ctx, req)
 	if err != nil {
 		log.Printf("failed to get secret version: %v", err)
-		return false
+		return false, err
 	}
 
-	return version.CreateTime.AsTime().Before(time.Now().Add(-time.Duration(ttlHour) * time.Hour))
+	return version.CreateTime.AsTime().Before(time.Now().Add(-time.Duration(ttlHour) * time.Hour)), nil
 }
 
 type LocalKeyring struct{}
