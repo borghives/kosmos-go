@@ -9,12 +9,12 @@ import (
 )
 
 type EntityObserver[T Collapsible] struct {
-	Entity
+	EntityDataverse
 }
 
 func NewEntityObserver[T Collapsible](entity model.Metadata) *EntityObserver[T] {
 	return &EntityObserver[T]{
-		Entity: Entity{EntityMeta: entity},
+		EntityDataverse: EntityDataverse{EntityMeta: entity},
 	}
 }
 

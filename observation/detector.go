@@ -18,13 +18,13 @@ type Observable interface {
 }
 
 type EntityDetector[T Observable] struct {
-	Entity
+	EntityDataverse
 	stages Aggregation
 }
 
-func NewEntityDetector[T Observable](entity model.Metadata) *EntityDetector[T] {
+func NewEntityDetector[T Observable](entityMeta model.Metadata) *EntityDetector[T] {
 	return &EntityDetector[T]{
-		Entity: Entity{EntityMeta: entity},
+		EntityDataverse: EntityDataverse{EntityMeta: entityMeta},
 	}
 }
 

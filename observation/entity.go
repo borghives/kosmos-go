@@ -5,11 +5,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type Entity struct {
+type EntityDataverse struct {
 	EntityMeta model.Metadata
 }
 
-func (e *Entity) DataCollection() *mongo.Collection {
+func (e *EntityDataverse) DataCollection() *mongo.Collection {
 	return SummonMongo(PurposeAffinityObserver).
 		BranchDatabase(e.EntityMeta.BranchName).
 		Collection(e.EntityMeta.DataName)
