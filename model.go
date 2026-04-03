@@ -26,15 +26,15 @@ func (e *BaseModel) CollapseID() bson.ObjectID {
 	return e.ID
 }
 
-func (e *BaseModel) Collapse() model.Ripple {
+func (e *BaseModel) Collapse() observation.Ripple {
 	e.CollapseID()
 	e.UpdatedTime = time.Now()
-	ripple := observation.OnInsertRipple("created_time", e.CreatedTime)
-	return ripple
+	ripple := observation.Ripple{}
+	return *ripple.OnInsertRipple("created_time", e.UpdatedTime)
 }
 
-func (e *BaseModel) WitnessScope() model.Scope {
-	return model.Scope{} // no witness scope to filter for base model
+func (e *BaseModel) GetCollapseScope() observation.Scope {
+	return observation.Scope{} // no witness scope to filter for base model
 }
 
 func (e BaseModel) IsEntangled() bool {
@@ -49,26 +49,49 @@ func (e BaseModel) InitialObserved() time.Time {
 	return e.CreatedTime
 }
 
+func (e *BaseModel) Decohere(ripple observation.Ripple) {
+	if ripple.InsertFeedback != nil {
+		for _, expr := range ripple.Expr {
+			if expr.Key == "$setOnInsert" {
+				for _, setOnInsertExpr := range expr.Value.(bson.D) {
+					if setOnInsertExpr.Key == "created_time" {
+						e.CreatedTime = setOnInsertExpr.Value.(time.Time)
+					}
+				}
+			}
+		}
+	}
+
+	if ripple.UpdateFeedback != nil {
+		if ripple.UpdateFeedback.UpsertedID != nil {
+			for _, expr := range ripple.Expr {
+				if expr.Key == "$setOnInsert" {
+					for _, setOnInsertExpr := range expr.Value.(bson.D) {
+						if setOnInsertExpr.Key == "created_time" {
+							e.CreatedTime = setOnInsertExpr.Value.(time.Time)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func Fld(name string) observation.EntityField {
 	return observation.EntityField{Name: name}
 }
 
-func Filter[T model.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
+func Filter[T observation.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
 	return All[T]().Filter(filters...)
 }
 
-func All[T model.Observable]() *observation.EntityDetector[T] {
+func All[T observation.Observable]() *observation.EntityDetector[T] {
 	var template T
-	tracker := &observation.EntityDetector[T]{
-		Type: model.GetMetadata(template),
-	}
-	return tracker
+	return observation.NewEntityDetector[T](model.GetMetadata(template))
 }
 
-func Witness[C model.Collapsable](obj C) C {
-	observer := &observation.EntityObserver[C]{
-		Type: model.GetMetadata(obj),
-	}
+func Witness[C observation.Collapsible](obj C) C {
+	observer := observation.NewEntityObserver[C](model.GetMetadata(obj))
 	observer.Witness(obj)
 	return obj
 }

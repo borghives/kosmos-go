@@ -5,31 +5,21 @@ import (
 	"reflect"
 	"slices"
 	"strings"
-	"time"
-
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type Observable interface {
-	IsEntangled() bool
-	LastObserved() time.Time
-	InitialObserved() time.Time
-}
-
-type Scope bson.D
-type Ripple bson.D
-
-type Collapsable interface {
-	IsEntangled() bool
-	CollapseID() bson.ObjectID
-	Collapse() Ripple    //return the ripple side effect after the collapse.  This will implicitly collapse the ID
-	WitnessScope() Scope //return the scope to filter by
-}
-
 type Metadata struct {
-	CollectionName  string
-	DataverseBranch string
-	FieldMap        map[string]string
+	DataName   string
+	BranchName string
+	FieldMap   map[string]string
+}
+
+func (e *Metadata) ResolveAlias(name string) string {
+	if e.FieldMap != nil {
+		if mapped, ok := e.FieldMap[name]; ok {
+			return mapped
+		}
+	}
+	return name
 }
 
 func GetMetadata(obj any) Metadata {
@@ -48,8 +38,8 @@ func GetMetadata(obj any) Metadata {
 	fieldMap := make(map[string]string)
 	populateFieldMap(t, fieldMap)
 
-	var collectionName string
-	var dataverseBranch string
+	var dataName string
+	var branchName string
 	modelKosmosString := field.Tag.Get("kosmos")
 	kosmosParts := strings.Split(modelKosmosString, ",")
 	if len(kosmosParts) > 0 {
@@ -57,19 +47,19 @@ func GetMetadata(obj any) Metadata {
 		dataParts := strings.Split(kosmosParts[0], ">")
 
 		if len(dataParts) == 1 {
-			collectionName = dataParts[0]
+			dataName = dataParts[0]
 		} else if len(dataParts) == 2 {
-			dataverseBranch = dataParts[0]
-			collectionName = dataParts[1]
+			branchName = dataParts[0]
+			dataName = dataParts[1]
 		} else {
 			log.Fatalf("model.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
 		}
 	}
 
 	return Metadata{
-		CollectionName:  collectionName,
-		DataverseBranch: dataverseBranch,
-		FieldMap:        fieldMap,
+		DataName:   dataName,
+		BranchName: branchName,
+		FieldMap:   fieldMap,
 	}
 }
 
@@ -109,13 +99,4 @@ func populateFieldMap(t reflect.Type, m map[string]string) {
 			}
 		}
 	}
-}
-
-func (e *Metadata) ResolveAlias(name string) string {
-	if e.FieldMap != nil {
-		if mapped, ok := e.FieldMap[name]; ok {
-			return mapped
-		}
-	}
-	return name
 }

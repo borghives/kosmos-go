@@ -354,6 +354,13 @@ func (m *MongoDataverse) MainDatabase() *mongo.Database {
 	return m.Client().Database(CollapseMainDatabaseName())
 }
 
+func (m *MongoDataverse) BranchDatabase(branchName string) *mongo.Database {
+	if branchName == "" || branchName == "main" {
+		return m.MainDatabase()
+	}
+	return m.Client().Database(branchName)
+}
+
 func (m *MongoDataverse) Collection(name string) *mongo.Collection {
 	return m.MainDatabase().Collection(name)
 }

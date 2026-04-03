@@ -5,42 +5,48 @@ import (
 
 	"github.com/borghives/kosmos-go/model"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func OnInsertRipple(key string, value any) model.Ripple {
-	return model.Ripple{kv("$setOnInsert", bson.D{kv(key, value)})}
+type EntityObserver[T Collapsible] struct {
+	Entity
 }
 
-type EntityObserver[T model.Collapsable] struct {
-	Type model.Metadata
-}
-
-func (r *EntityObserver[T]) dataCollection() *mongo.Collection {
-	return SummonMongo(PurposeAffinityObserver).Collection(r.Type.CollectionName)
+func NewEntityObserver[T Collapsible](entity model.Metadata) *EntityObserver[T] {
+	return &EntityObserver[T]{
+		Entity: Entity{EntityMeta: entity},
+	}
 }
 
 func (r *EntityObserver[T]) Witness(object T) error {
-	scope := object.WitnessScope()
+	scope := object.GetCollapseScope()
 	isEntangled := object.IsEntangled()
 	ripple := object.Collapse()
 
-	// if no impact scope to filter by and not entangled, it's a new record
+	// if no scope to filter by and not previously entangled, it's a new record
 	if len(scope) == 0 && !isEntangled {
-		_, err := r.dataCollection().InsertOne(context.Background(), object)
-		return err
+		insertResult, err := r.DataCollection().InsertOne(context.Background(), object)
+		if err != nil {
+			return err
+		}
+		ripple.InsertFeedback = insertResult
+	} else {
+		// if entangled, use the collapse id as scope
+		if isEntangled {
+			scope = Scope{kv("_id", object.CollapseID())}
+		}
+
+		update := bson.D{kv("$set", object)}
+		update = append(update, ripple.Expr...) // add ripple affect to update
+
+		updateOption := options.UpdateOne().SetUpsert(true)
+		updateResult, err := r.DataCollection().UpdateOne(context.Background(), scope, update, updateOption)
+		if err != nil {
+			return err
+		}
+		ripple.UpdateFeedback = updateResult
 	}
 
-	// if entangled, use the collapse id as scope
-	if isEntangled {
-		scope = model.Scope{kv("_id", object.CollapseID())}
-	}
-
-	update := bson.D{kv("$set", object)}
-	update = append(update, ripple...) // add ripple affect to update
-
-	updateOption := options.UpdateOne().SetUpsert(true)
-	_, err := r.dataCollection().UpdateOne(context.Background(), scope, update, updateOption)
-	return err
+	object.Decohere(ripple)
+	return nil
 }

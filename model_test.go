@@ -6,6 +6,7 @@ import (
 	"github.com/borghives/kosmos-go"
 	km "github.com/borghives/kosmos-go"
 	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -16,14 +17,18 @@ type TestModel struct {
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
-var _ model.Observable = TestModel{}
-var _ model.Observable = (*TestModel)(nil)
+var _ observation.Observable = TestModel{}
+var _ observation.Observable = (*TestModel)(nil)
 
 func TestWitness(t *testing.T) {
 	m := TestModel{
 		Name: "MAGIC_Ed4",
 	}
+	previousTime := m.CreatedTime
 	kosmos.Witness(&m)
+	if previousTime.Equal(m.CreatedTime) {
+		t.Errorf("expected created time to be set")
+	}
 }
 
 func TestFilter(t *testing.T) {
@@ -37,8 +42,8 @@ func TestFilter(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	if record.Type.CollectionName != "test_coll" {
-		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
+	if record.EntityMeta.DataName != "test_coll" {
+		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
 	obj, err := record.PullOne()
@@ -68,8 +73,8 @@ func TestFilterPredicate(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	if record.Type.CollectionName != "test_coll" {
-		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
+	if record.EntityMeta.DataName != "test_coll" {
+		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
 	obj, err := record.PullOne()
@@ -101,8 +106,8 @@ func TestFilterIn(t *testing.T) {
 		t.Fatalf("expected record to not be nil")
 	}
 
-	if record.Type.CollectionName != "test_coll" {
-		t.Errorf("expected collection name 'test_coll', got '%s'", record.Type.CollectionName)
+	if record.EntityMeta.DataName != "test_coll" {
+		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
 	obj, err := record.PullOne()
@@ -130,8 +135,8 @@ func TestFilterPointer(t *testing.T) {
 	detector := kosmos.Filter[*TestModel](
 		km.Fld("_id").Eq(bson.NewObjectID()),
 	)
-	if detector.Type.CollectionName != "test_coll" {
-		t.Errorf("expected test_coll, got %s", detector.Type.CollectionName)
+	if detector.EntityMeta.DataName != "test_coll" {
+		t.Errorf("expected test_coll, got %s", detector.EntityMeta.DataName)
 	}
 }
 

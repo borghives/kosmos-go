@@ -3,6 +3,7 @@ package observation
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/borghives/kosmos-go/model"
 	"github.com/borghives/kosmos-go/observation/expression"
@@ -10,22 +11,34 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type EntityDetector[T model.Observable] struct {
-	Type   model.Metadata
+type Observable interface {
+	IsEntangled() bool
+	LastObserved() time.Time
+	InitialObserved() time.Time
+}
+
+type EntityDetector[T Observable] struct {
+	Entity
 	stages Aggregation
+}
+
+func NewEntityDetector[T Observable](entity model.Metadata) *EntityDetector[T] {
+	return &EntityDetector[T]{
+		Entity: Entity{EntityMeta: entity},
+	}
 }
 
 func (r *EntityDetector[T]) Filter(filters ...expression.QueryFieldPredicate) *EntityDetector[T] {
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
 	} else {
 		exprs := make(bson.A, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.EntityMeta.ResolveAlias).(bson.D))
 	}
 	return r
 }
@@ -34,13 +47,13 @@ func (r *EntityDetector[T]) FilterEither(filters ...expression.QueryFieldPredica
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
 	} else {
 		exprs := make(bson.A, len(filters))
 		for i, f := range filters {
 			exprs[i] = f
 		}
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.Type.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.EntityMeta.ResolveAlias).(bson.D))
 	}
 	return r
 }
@@ -75,23 +88,26 @@ func (r *EntityDetector[T]) PullAll() ([]T, error) {
 	return results, nil
 }
 
-func (r *EntityDetector[T]) dataCollection() *mongo.Collection {
-	return SummonMongo(PurposeAffinityObserver).Collection(r.Type.CollectionName)
-}
-
 func (r *EntityDetector[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r *EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
-	dataCollection := r.dataCollection()
+func (r *EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*mongo.Cursor, error) {
+	dataCollection := r.DataCollection()
 
 	stages := r.stages.AppendFrom(postStages)
 	cursor, err := dataCollection.Aggregate(ctx, stages.Pipeline())
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate %v: %v", stages.JsonString(), err)
 	}
-	defer cursor.Close(ctx)
+	return cursor, nil
+}
+
+func (r *EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
+	cursor, err := r.RunPipeline(ctx, postStages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull: %v", err)
+	}
 
 	var results []T
 	err = cursor.All(ctx, &results)
