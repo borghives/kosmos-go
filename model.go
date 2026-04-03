@@ -33,7 +33,7 @@ func (e *BaseModel) Collapse() observation.Ripple {
 	return *ripple.OnInsertRipple("created_time", e.UpdatedTime)
 }
 
-func (e *BaseModel) GetCollapseScope() observation.Scope {
+func (e *BaseModel) GetScope() observation.Scope {
 	return observation.Scope{} // no witness scope to filter for base model
 }
 
@@ -50,30 +50,8 @@ func (e BaseModel) InitialObserved() time.Time {
 }
 
 func (e *BaseModel) Decohere(ripple observation.Ripple) {
-	if ripple.InsertFeedback != nil {
-		for _, expr := range ripple.Expr {
-			if expr.Key == "$setOnInsert" {
-				for _, setOnInsertExpr := range expr.Value.(bson.D) {
-					if setOnInsertExpr.Key == "created_time" {
-						e.CreatedTime = setOnInsertExpr.Value.(time.Time)
-					}
-				}
-			}
-		}
-	}
-
-	if ripple.UpdateFeedback != nil {
-		if ripple.UpdateFeedback.UpsertedID != nil {
-			for _, expr := range ripple.Expr {
-				if expr.Key == "$setOnInsert" {
-					for _, setOnInsertExpr := range expr.Value.(bson.D) {
-						if setOnInsertExpr.Key == "created_time" {
-							e.CreatedTime = setOnInsertExpr.Value.(time.Time)
-						}
-					}
-				}
-			}
-		}
+	if ripple.WasInserted() {
+		e.CreatedTime = ripple.GetOnInsertFor("created_time").(time.Time)
 	}
 }
 

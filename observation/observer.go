@@ -19,7 +19,7 @@ func NewEntityObserver[T Collapsible](entity model.Metadata) *EntityObserver[T] 
 }
 
 func (r *EntityObserver[T]) Witness(object T) error {
-	scope := object.GetCollapseScope()
+	scope := object.GetScope()
 	isEntangled := object.IsEntangled()
 	ripple := object.Collapse()
 
