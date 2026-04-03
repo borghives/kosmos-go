@@ -7,11 +7,21 @@ type QueryFieldPredicate struct {
 	Query     QueryOp
 }
 
+func (q QueryFieldPredicate) Empty() bool {
+	return q == (QueryFieldPredicate{}) // default value
+}
+
 func (q QueryFieldPredicate) ToRepr() any {
+	if q.Empty() {
+		return bson.D{}
+	}
 	return bson.D{kv(q.FieldName.Name, q.Query.ToRepr())}
 }
 
 func (q QueryFieldPredicate) Reduce(resolver NameResolver) any {
+	if q.Empty() {
+		return bson.D{}
+	}
 	return bson.D{kv(resolver(q.FieldName.Name), NormalizeExpression(q.Query, resolver))}
 }
 

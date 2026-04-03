@@ -44,35 +44,59 @@ func (q EntityField) literal(value any) expression.LiteralValue {
 }
 
 func (q EntityField) Eq(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	litValue := q.literal(value)
 	return q.ToQueryPredicate(expression.Eq(litValue))
 }
 
 func (q EntityField) Ne(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Ne(q.literal(value)))
 }
 
 func (q EntityField) Gt(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Gt(q.literal(value)))
 }
 
 func (q EntityField) Gte(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Gte(q.literal(value)))
 }
 
 func (q EntityField) Lt(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Lt(q.literal(value)))
 }
 
 func (q EntityField) Lte(value any) expression.QueryFieldPredicate {
+	if value == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Lte(q.literal(value)))
 }
 
 func (q EntityField) In(values ...any) expression.QueryFieldPredicate {
+	if values == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.In(q.literalSlice(values)))
 }
 
 func (q EntityField) Nin(values ...any) expression.QueryFieldPredicate {
+	if values == nil {
+		return expression.QueryFieldPredicate{}
+	}
 	return q.ToQueryPredicate(expression.Nin(q.literalSlice(values)))
 }
 
