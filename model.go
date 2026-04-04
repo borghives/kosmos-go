@@ -68,8 +68,7 @@ func All[T observation.Observable]() *observation.EntityDetector[T] {
 	return observation.NewEntityDetector[T](model.GetMetadata(template))
 }
 
-func Witness[C observation.Collapsible](obj C) C {
+func Witness[C observation.Collapsible](obj C) error {
 	observer := observation.NewEntityObserver[C](model.GetMetadata(obj))
-	observer.Witness(obj)
-	return obj
+	return observer.Witness(obj)
 }
