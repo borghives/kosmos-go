@@ -1,6 +1,7 @@
 package kosmos_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/borghives/kosmos-go"
@@ -25,7 +26,7 @@ func TestWitness(t *testing.T) {
 		Name: "MAGIC_Ed4",
 	}
 	previousTime := m.CreatedTime
-	kosmos.Witness(&m)
+	kosmos.Witness(context.Background(), &m)
 	if previousTime.Equal(m.CreatedTime) {
 		t.Errorf("expected created time to be set")
 	}
@@ -46,7 +47,7 @@ func TestFilter(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
-	obj, err := record.PullOne()
+	obj, err := record.PullOne(context.Background())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -77,7 +78,7 @@ func TestFilterPredicate(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
-	obj, err := record.PullOne()
+	obj, err := record.PullOne(context.Background())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -110,7 +111,7 @@ func TestFilterIn(t *testing.T) {
 		t.Errorf("expected collection name 'test_coll', got '%s'", record.EntityMeta.DataName)
 	}
 
-	obj, err := record.PullOne()
+	obj, err := record.PullOne(context.Background())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

@@ -1,6 +1,7 @@
 package kosmos
 
 import (
+	"context"
 	"time"
 
 	"github.com/borghives/kosmos-go/model"
@@ -68,7 +69,7 @@ func All[T observation.Observable]() *observation.EntityDetector[T] {
 	return observation.NewEntityDetector[T](model.GetMetadata(template))
 }
 
-func Witness[C observation.Collapsible](obj C) error {
+func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
 	observer := observation.NewEntityObserver[C](model.GetMetadata(obj))
-	return observer.Witness(obj)
+	return observer.Witness(ctx, obj)
 }

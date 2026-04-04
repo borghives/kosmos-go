@@ -71,8 +71,8 @@ func (r *EntityDetector[T]) Sort(field string, descending bool) *EntityDetector[
 	return r
 }
 
-func (r *EntityDetector[T]) PullOne() (*T, error) {
-	results, err := r.pullPipeline(context.Background(), Aggregation{}.Limit(1))
+func (r *EntityDetector[T]) PullOne(ctx context.Context) (*T, error) {
+	results, err := r.pullPipeline(ctx, Aggregation{}.Limit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +84,8 @@ func (r *EntityDetector[T]) PullOne() (*T, error) {
 	return &results[0], nil
 }
 
-func (r *EntityDetector[T]) PullAll() ([]T, error) {
-	results, err := r.pullPipeline(context.Background(), Aggregation{})
+func (r *EntityDetector[T]) PullAll(ctx context.Context) ([]T, error) {
+	results, err := r.pullPipeline(ctx, Aggregation{})
 	if err != nil {
 		return nil, err
 	}
