@@ -42,6 +42,10 @@ func (e BaseModel) IsEntangled() bool {
 	return !e.ID.IsZero()
 }
 
+func (e BaseModel) GetID() bson.ObjectID {
+	return e.ID
+}
+
 func (e BaseModel) LastObserved() time.Time {
 	return e.UpdatedTime
 }
@@ -60,11 +64,11 @@ func Fld(name string) observation.EntityField {
 	return observation.EntityField{Name: name}
 }
 
-func Filter[T observation.Observable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
+func Filter[T observation.Detectable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
 	return All[T]().Filter(filters...)
 }
 
-func All[T observation.Observable]() *observation.EntityDetector[T] {
+func All[T observation.Detectable]() *observation.EntityDetector[T] {
 	var template T
 	return observation.NewEntityDetector[T](model.GetMetadata(template))
 }

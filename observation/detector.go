@@ -11,18 +11,19 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type Observable interface {
+type Detectable interface {
+	GetID() bson.ObjectID
 	IsEntangled() bool
 	LastObserved() time.Time
 	InitialObserved() time.Time
 }
 
-type EntityDetector[T Observable] struct {
+type EntityDetector[T Detectable] struct {
 	EntityDataverse
 	stages Aggregation
 }
 
-func NewEntityDetector[T Observable](entityMeta model.Metadata) *EntityDetector[T] {
+func NewEntityDetector[T Detectable](entityMeta model.Metadata) *EntityDetector[T] {
 	return &EntityDetector[T]{
 		EntityDataverse: EntityDataverse{EntityMeta: entityMeta},
 	}

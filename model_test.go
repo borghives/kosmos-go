@@ -18,8 +18,8 @@ type TestModel struct {
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
-var _ observation.Observable = TestModel{}
-var _ observation.Observable = (*TestModel)(nil)
+var _ observation.Detectable = TestModel{}
+var _ observation.Detectable = (*TestModel)(nil)
 
 func TestWitness(t *testing.T) {
 	m := TestModel{
