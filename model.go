@@ -69,8 +69,7 @@ func Filter[T observation.Detectable](filters ...expression.QueryFieldPredicate)
 }
 
 func All[T observation.Detectable]() *observation.EntityDetector[T] {
-	var template T
-	return observation.NewEntityDetector[T](model.GetMetadata(template))
+	return observation.NewEntityDetector[T]()
 }
 
 func Witness[C observation.Collapsible](ctx context.Context, obj C) error {

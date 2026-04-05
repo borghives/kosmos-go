@@ -23,9 +23,10 @@ type EntityDetector[T Detectable] struct {
 	stages Aggregation
 }
 
-func NewEntityDetector[T Detectable](entityMeta model.Metadata) *EntityDetector[T] {
+func NewEntityDetector[T Detectable]() *EntityDetector[T] {
+	var template T
 	return &EntityDetector[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: entityMeta},
+		EntityDataverse: EntityDataverse{EntityMeta: model.GetMetadata(template)},
 	}
 }
 
@@ -60,6 +61,11 @@ func (r *EntityDetector[T]) FilterEither(filters ...expression.QueryFieldPredica
 		exprs := toBSONArray(filters...)
 		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.EntityMeta.ResolveAlias).(bson.D))
 	}
+	return r
+}
+
+func (r *EntityDetector[T]) Limit(limit int64) *EntityDetector[T] {
+	r.stages = r.stages.Limit(limit)
 	return r
 }
 
