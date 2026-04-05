@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/borghives/kosmos-go/model"
 	"github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -73,6 +72,6 @@ func All[T observation.Detectable]() *observation.EntityDetector[T] {
 }
 
 func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
-	observer := observation.NewEntityObserver[C](model.GetMetadata(obj))
+	observer := observation.NewEntityObserver[C]()
 	return observer.Witness(ctx, obj)
 }
