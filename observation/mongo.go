@@ -212,6 +212,7 @@ func SummonMongo(purpose PurposeAffinity) *MongoDataverse {
 func (m *MongoDataverse) Client() *mongo.Client {
 	if m.client == nil {
 		var err error
+		fmt.Printf("Connecting to MongoDB for purpose %v with URI: %v, Username: %v\n", m.purpose, m.clientOption.Hosts, m.clientOption.Auth.Username)
 		m.client, err = m.Connect()
 		if err != nil {
 			log.Fatalf("Failed to connect to MongoDB: %v", err)
