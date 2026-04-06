@@ -14,3 +14,7 @@ func (e *EntityDataverse) DataCollection() *mongo.Collection {
 		BranchDatabase(e.EntityMeta.BranchName).
 		Collection(e.EntityMeta.DataName)
 }
+
+func (e *EntityDataverse) PingClient() {
+	SummonMongo(PurposeAffinityObserver).Client()
+}

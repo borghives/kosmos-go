@@ -75,3 +75,7 @@ func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
 	observer := observation.NewEntityObserver[C]()
 	return observer.Witness(ctx, obj)
 }
+
+func MustHaveObserver[C observation.Collapsible]() {
+	observation.NewEntityObserver[C]().PingClient()
+}
