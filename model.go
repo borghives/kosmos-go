@@ -2,6 +2,7 @@ package kosmos
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/borghives/kosmos-go/observation"
@@ -76,6 +77,9 @@ func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
 	return observer.Witness(ctx, obj)
 }
 
-func MustHaveObserver[C observation.Collapsible]() {
-	observation.NewEntityObserver[C]().PingClient()
+func MustHaveObserverClient() {
+	client := observation.SummonMongo(observation.PurposeAffinityObserver).Client()
+	if client == nil {
+		log.Fatalf("Observer client not initialized")
+	}
 }
