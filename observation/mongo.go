@@ -86,11 +86,15 @@ func CollapseMongoURISecret(uri string) (string, error) {
 }
 
 func MaskMongoURI(uri string) (string, error) {
+	if len(uri) == 0 {
+		return "", fmt.Errorf("Mongo URI is empty or not set.")
+	}
 	// 1. Isolate the scheme
 	schemeSplit := strings.SplitN(uri, "://", 2)
 	if len(schemeSplit) != 2 {
-		return "", fmt.Errorf("invalid URI format")
+		return "", fmt.Errorf("Mongo URI has invalid format")
 	}
+
 	scheme, remainder := schemeSplit[0], schemeSplit[1]
 
 	// 2. Find the end of the credentials (the LAST '@' before any '/' or '?')
