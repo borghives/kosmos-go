@@ -1,6 +1,8 @@
 package observation
 
 import (
+	"time"
+
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -37,6 +39,26 @@ func (q EntityField) literalSlice(values []any) bson.A {
 }
 
 func (q EntityField) literal(value any) expression.LiteralValue {
+	switch val := value.(type) {
+	case *bson.ObjectID:
+		value = *val
+	case *string:
+		value = *val
+	case *int:
+		value = *val
+	case *int32:
+		value = *val
+	case *int64:
+		value = *val
+	case *float32:
+		value = *val
+	case *float64:
+		value = *val
+	case *bool:
+		value = *val
+	case *time.Time:
+		value = *val
+	}
 	return expression.LiteralValue{
 		Value:   value,
 		Context: q.wrapFieldName(),
