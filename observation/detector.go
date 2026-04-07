@@ -69,7 +69,12 @@ func (r *EntityDetector[T]) Limit(limit int64) *EntityDetector[T] {
 	return r
 }
 
+func (r *EntityDetector[T]) SortLatest() *EntityDetector[T] {
+	return r.Sort("updated_time", true)
+}
+
 func (r *EntityDetector[T]) Sort(field string, descending bool) *EntityDetector[T] {
+	field = r.EntityMeta.ResolveAlias(field)
 	order := 1
 	if descending {
 		order = -1
