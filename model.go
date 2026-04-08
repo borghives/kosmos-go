@@ -15,13 +15,12 @@ import (
 type BaseModel struct {
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
-	CreatedTime time.Time     `xml:"created" json:"created" bson:"created_time"`
+	CreatedTime *time.Time    `xml:"created" json:"created" bson:"created_time,omitempty"`
 }
 
 func (e *BaseModel) CollapseID() bson.ObjectID {
 	if e.ID.IsZero() {
 		e.ID = bson.NewObjectID()
-		e.CreatedTime = time.Now()
 	}
 
 	return e.ID
@@ -31,7 +30,12 @@ func (e *BaseModel) Collapse() observation.Ripple {
 	e.CollapseID()
 	e.UpdatedTime = time.Now()
 	ripple := observation.Ripple{}
-	return *ripple.OnInsertRipple("created_time", e.UpdatedTime)
+	createdTime := e.CreatedTime
+	if createdTime == nil {
+		createdTime = &e.UpdatedTime
+	}
+	e.CreatedTime = nil // reset created time for new insert.  Will get back value after decoherence of the ripple
+	return *ripple.OnInsertRipple("created_time", *createdTime)
 }
 
 func (e *BaseModel) GetScope() observation.Scope {
@@ -50,14 +54,9 @@ func (e BaseModel) LastObserved() time.Time {
 	return e.UpdatedTime
 }
 
-func (e BaseModel) InitialObserved() time.Time {
-	return e.CreatedTime
-}
-
 func (e *BaseModel) Decohere(ripple observation.Ripple) {
-	if ripple.WasInserted() {
-		e.CreatedTime = ripple.GetOnInsertFor("created_time").(time.Time)
-	}
+	createdTime := ripple.GetOnInsertFor("created_time").(time.Time)
+	e.CreatedTime = &createdTime // set created time back after decoherence
 }
 
 func Fld(name string) observation.EntityField {

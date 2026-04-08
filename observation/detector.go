@@ -15,7 +15,6 @@ type Detectable interface {
 	GetID() bson.ObjectID
 	IsEntangled() bool
 	LastObserved() time.Time
-	InitialObserved() time.Time
 }
 
 type EntityDetector[T Detectable] struct {
