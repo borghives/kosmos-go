@@ -80,7 +80,7 @@ func CollapseMongoURISecret(uri string) (string, error) {
 
 	// 4. Translate and Stitch
 	var err error
-	if ether.IsSecretSource(pass) {
+	if ether.IsSecretSourceFormat(pass) {
 		pass, err = ether.CollapseSecretSource(pass)
 		if err != nil {
 			return "", err
@@ -134,10 +134,6 @@ func CollapseMainDatabaseName() string {
 
 func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	constants := ether.CollapseDataverseConstants()
-	if constants.CmdUri != "" {
-		return CollapseMongoURISecret(constants.CmdUri)
-	}
-
 	switch purpose {
 	case PurposeAffinityObserver:
 		return CollapseMongoURISecret(constants.Uri)
@@ -146,7 +142,7 @@ func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	case PurposeAffinityAdmin:
 		return CollapseMongoURISecret(constants.AdminUri)
 	default:
-		return constants.Uri, nil
+		return CollapseMongoURISecret(constants.Uri)
 	}
 }
 
@@ -399,7 +395,7 @@ func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, e
 
 	clientOptions := options.Client().ApplyURI(uri)
 
-	proxyAddress := ether.CollapseConstants().ProxyAddress
+	proxyAddress := ether.CollapseUniversalConstants().ProxyAddress
 	if proxyAddress != "" {
 		log.Println("Using proxy for MongoDB: ", proxyAddress)
 		proxyUrl, err := url.Parse(proxyAddress)

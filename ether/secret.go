@@ -18,12 +18,12 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-func IsSecretSource(s string) bool {
+func IsSecretSourceFormat(s string) bool {
 	return strings.HasPrefix(string(s), "__secret:") && strings.HasSuffix(string(s), "__")
 }
 
-func CollapseSecret(s string) (string, error) {
-	if IsSecretSource(s) {
+func CollapseSecretString(s string) (string, error) {
+	if IsSecretSourceFormat(s) {
 		return CollapseSecretSource(s)
 	}
 	parts := strings.Split(s, ":")
@@ -38,7 +38,7 @@ func CollapseSecretSource(s string) (string, error) {
 	//parse string "__secret:name:version__"
 
 	//check if the string is a holder string
-	if !IsSecretSource(s) {
+	if !IsSecretSourceFormat(s) {
 		return "", fmt.Errorf("Not a secret source string")
 	}
 
@@ -79,7 +79,7 @@ type SecretManager interface {
 
 // Load parses a .envsecret file and then loads all the variables found as environment variables.
 // It uses the provided SecretManager to fetch the actual secret value.
-func LoadSecrets(manager SecretManager, filenames ...string) error {
+func LoadSecretsFile(manager SecretManager, filenames ...string) error {
 	if manager == nil {
 		return errors.New("SecretManager is nil")
 	}
@@ -103,7 +103,7 @@ func LoadSecrets(manager SecretManager, filenames ...string) error {
 }
 
 func SummonSecretManager() SecretManager {
-	constants := CollapseConstants()
+	constants := CollapseUniversalConstants()
 	if constants.ProjectID == "" {
 		log.Fatalf("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
 	}
