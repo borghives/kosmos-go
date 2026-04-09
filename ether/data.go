@@ -7,7 +7,7 @@ type MongoConstants struct {
 	Database   string `mapstructure:"MONGODB_DATABASE" cmdflag:"database,permeate" `
 }
 
-var MongoDataverseConstants EtherStructure[MongoConstants]
+var MongoDataverseConstants Structure[MongoConstants]
 
 func CollapseDataverseConstants() MongoConstants {
 	return MongoDataverseConstants.Collapse()

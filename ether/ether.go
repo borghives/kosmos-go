@@ -10,22 +10,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-var knownEthers []Ether
+var knownEthers []Liminal
 
-type Ether interface {
+type Liminal interface {
 	MergeFromFile(filenames ...string)
 	MergeFromCmd(cmd *cobra.Command)
 	Coalesce() error
 }
 
-type EtherStructure[T any] struct {
+type Structure[T any] struct {
 	Constants    T
 	v            *viper.Viper
 	vOnce        sync.Once
 	collapseOnce sync.Once
 }
 
-func (e *EtherStructure[T]) getViper() *viper.Viper {
+func (e *Structure[T]) getViper() *viper.Viper {
 	e.vOnce.Do(func() {
 		e.v = viper.New()
 		LoadUniversalEnv(e.v)
@@ -34,7 +34,7 @@ func (e *EtherStructure[T]) getViper() *viper.Viper {
 	return e.v
 }
 
-func (e *EtherStructure[T]) Coalesce() error {
+func (e *Structure[T]) Coalesce() error {
 	var err error
 	e.collapseOnce.Do(func() {
 		v := e.getViper()
@@ -43,14 +43,14 @@ func (e *EtherStructure[T]) Coalesce() error {
 	return err
 }
 
-func (e *EtherStructure[T]) Collapse() T {
+func (e *Structure[T]) Collapse() T {
 	if err := e.Coalesce(); err != nil {
 		log.Fatalf("Fatal: Failed to Collapse ether: %v", err)
 	}
 	return e.Constants
 }
 
-func (e *EtherStructure[T]) MergeFromFile(filenames ...string) {
+func (e *Structure[T]) MergeFromFile(filenames ...string) {
 	v := e.getViper()
 	// 1. look for addition environment file
 	for _, filename := range filenames {
@@ -59,7 +59,7 @@ func (e *EtherStructure[T]) MergeFromFile(filenames ...string) {
 	}
 }
 
-func (e *EtherStructure[T]) MergeFromCmd(cmd *cobra.Command) {
+func (e *Structure[T]) MergeFromCmd(cmd *cobra.Command) {
 	v := e.getViper()
 	keyMap := GetConstantsKeyMap(e.Constants)
 	for key, constantTag := range keyMap {
@@ -133,7 +133,7 @@ func SetupEnvironmentStructures(v *viper.Viper, keyMap map[string]ConstantTag) {
 	v.AutomaticEnv()
 }
 
-func RegisterEther(e Ether) {
+func RegisterEther(e Liminal) {
 	knownEthers = append(knownEthers, e)
 }
 
