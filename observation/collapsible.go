@@ -8,8 +8,30 @@ import (
 type Scope bson.D
 type Ripple struct {
 	Expr           bson.D
+	LiminalState   map[string]any
 	InsertFeedback *mongo.InsertOneResult
 	UpdateFeedback *mongo.UpdateResult
+}
+
+type Collapsible interface {
+	IsEntangled() bool
+	GetScope() Scope //return the scope of the Collapse
+	CollapseID() bson.ObjectID
+	Collapse() Ripple       //return the ripple side effect after the collapse.  This will implicitly collapse the ID
+	Decohere(ripple Ripple) //After the collapse and interaction with environment, an entity decoheres (ripple contains materialization info)
+}
+
+func (r *Ripple) Set(key string, value any) *Ripple {
+	if r.LiminalState == nil {
+		r.LiminalState = make(map[string]any)
+	}
+	r.LiminalState[key] = value
+	return r
+}
+
+func (r *Ripple) Get(key string) (any, bool) {
+	value, ok := r.LiminalState[key]
+	return value, ok
 }
 
 func (r *Ripple) OnInsertRipple(key string, value any) *Ripple {
@@ -20,7 +42,7 @@ func (r *Ripple) OnInsertRipple(key string, value any) *Ripple {
 	return r
 }
 
-func (r *Ripple) GetOnInsertFor(key string) any {
+func (r *Ripple) GetOnInsertFor(key string, defaultValue any) any {
 	for _, expr := range r.Expr {
 		if expr.Key == "$setOnInsert" {
 			for _, setOnInsertExpr := range expr.Value.(bson.D) {
@@ -30,17 +52,9 @@ func (r *Ripple) GetOnInsertFor(key string) any {
 			}
 		}
 	}
-	return nil
+	return defaultValue
 }
 
 func (r *Ripple) WasInserted() bool {
 	return r.InsertFeedback != nil || (r.UpdateFeedback != nil && r.UpdateFeedback.UpsertedID != nil)
-}
-
-type Collapsible interface {
-	IsEntangled() bool
-	GetScope() Scope //return the scope of the Collapse
-	CollapseID() bson.ObjectID
-	Collapse() Ripple       //return the ripple side effect after the collapse.  This will implicitly collapse the ID
-	Decohere(ripple Ripple) //After the collapse and interaction with environment, an entity decoheres (ripple contains materialization info)
 }

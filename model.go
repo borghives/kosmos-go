@@ -30,12 +30,10 @@ func (e *BaseModel) Collapse() observation.Ripple {
 	e.CollapseID()
 	e.UpdatedTime = time.Now()
 	ripple := observation.Ripple{}
-	createdTime := e.CreatedTime
-	if createdTime == nil {
-		createdTime = &e.UpdatedTime
-	}
-	e.CreatedTime = nil // reset created time for new insert.  Will get back value after decoherence of the ripple
-	return *ripple.OnInsertRipple("created_time", *createdTime)
+
+	ripple.Set("created_time", e.CreatedTime) // save created time during collapse since it is unknown until after decoherence
+	e.CreatedTime = nil                       // reset created time for new insert.  Will get back value after decoherence of the ripple
+	return *ripple.OnInsertRipple("created_time", e.UpdatedTime)
 }
 
 func (e *BaseModel) GetScope() observation.Scope {
@@ -55,8 +53,15 @@ func (e BaseModel) LastObserved() time.Time {
 }
 
 func (e *BaseModel) Decohere(ripple observation.Ripple) {
-	createdTime := ripple.GetOnInsertFor("created_time").(time.Time)
-	e.CreatedTime = &createdTime // set created time back after decoherence
+	if ripple.WasInserted() {
+		createdTime := ripple.GetOnInsertFor("created_time", time.Now()).(time.Time)
+		e.CreatedTime = &createdTime // set created time back after decoherence
+	} else {
+		createdTime, ok := ripple.Get("created_time")
+		if ok {
+			e.CreatedTime = createdTime.(*time.Time)
+		}
+	}
 }
 
 func Fld(name string) observation.EntityField {
