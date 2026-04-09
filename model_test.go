@@ -198,7 +198,7 @@ func TestNormalizeDocument(t *testing.T) {
 
 func TestBaseModelCollapseID(t *testing.T) {
 	m := kosmos.BaseModel{}
-	if m.IsEntangled() {
+	if m.HasID() {
 		t.Error("expected new model to not be entangled")
 	}
 
@@ -206,7 +206,7 @@ func TestBaseModelCollapseID(t *testing.T) {
 	if id.IsZero() {
 		t.Error("expected non-zero id after collapse")
 	}
-	if !m.IsEntangled() {
+	if !m.HasID() {
 		t.Error("expected model to be entangled after collapse")
 	}
 	if m.ID != id {

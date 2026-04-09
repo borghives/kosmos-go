@@ -40,7 +40,7 @@ func (e *BaseModel) GetScope() observation.Scope {
 	return observation.Scope{} // no witness scope to filter for base model
 }
 
-func (e BaseModel) IsEntangled() bool {
+func (e BaseModel) HasID() bool {
 	return !e.ID.IsZero()
 }
 

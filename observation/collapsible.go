@@ -14,9 +14,9 @@ type Ripple struct {
 }
 
 type Collapsible interface {
-	IsEntangled() bool
-	GetScope() Scope //return the scope of the Collapse
 	CollapseID() bson.ObjectID
+	HasID() bool
+	GetScope() Scope        //return the scope of the Collapse
 	Collapse() Ripple       //return the ripple side effect after the collapse.  This will implicitly collapse the ID
 	Decohere(ripple Ripple) //After the collapse and interaction with environment, an entity decoheres (ripple contains materialization info)
 }

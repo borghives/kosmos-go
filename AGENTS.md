@@ -18,9 +18,9 @@ Use the following concepts and terminology when interacting with the state, life
   * **Concept:** Causal side effects extending outwards through reality from an event.
   * **Usage:** Use for defining reactive changes or secondary updates that must occur alongside a `Collapse` or `Witness` event (e.g., defining side-effects like MongoDB `$setOnInsert` operations).
 
-* **`Entangled`**
+* **`Decohered`**
   * **Concept:** The state of being inextricably linked to the underlying fabric of reality (the database).
-  * **Usage:** Use for checking if an object has identity or exists in the system (e.g., `IsEntangled()` to check if an entity already has a primary key/ID).
+  * **Usage:** Use for checking if an object has identity or exists in the system (e.g., `HasID()` to check if an entity already has a primary key/ID).
 
 * **`Summon`**
   * **Concept:** Calling forth an authoritative entity or service into the active context.

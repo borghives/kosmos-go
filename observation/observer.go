@@ -21,19 +21,19 @@ func NewEntityObserver[T Collapsible]() *EntityObserver[T] {
 
 func (r *EntityObserver[T]) Witness(ctx context.Context, object T) error {
 	scope := object.GetScope()
-	isEntangled := object.IsEntangled()
+	hasId := object.HasID()
 	ripple := object.Collapse()
 
 	// if no scope to filter by and not previously entangled, it's a new record
-	if len(scope) == 0 && !isEntangled {
+	if len(scope) == 0 && !hasId {
 		insertResult, err := r.DataCollection().InsertOne(ctx, object)
 		if err != nil {
 			return err
 		}
 		ripple.InsertFeedback = insertResult
 	} else {
-		// if entangled, use the collapse id as scope
-		if isEntangled {
+		// if has id, use the collapse id as scope
+		if hasId {
 			scope = Scope{kv("_id", object.CollapseID())}
 		}
 

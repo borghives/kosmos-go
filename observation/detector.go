@@ -13,7 +13,7 @@ import (
 
 type Detectable interface {
 	GetID() bson.ObjectID
-	IsEntangled() bool
+	HasID() bool
 	LastObserved() time.Time
 }
 
