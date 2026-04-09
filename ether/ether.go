@@ -18,14 +18,14 @@ type Liminal interface {
 	Coalesce() error
 }
 
-type Structure[T any] struct {
+type LiminalStructure[T any] struct {
 	Constants    T
 	v            *viper.Viper
 	vOnce        sync.Once
 	collapseOnce sync.Once
 }
 
-func (e *Structure[T]) getViper() *viper.Viper {
+func (e *LiminalStructure[T]) getViper() *viper.Viper {
 	e.vOnce.Do(func() {
 		e.v = viper.New()
 		LoadUniversalEnv(e.v)
@@ -34,7 +34,7 @@ func (e *Structure[T]) getViper() *viper.Viper {
 	return e.v
 }
 
-func (e *Structure[T]) Coalesce() error {
+func (e *LiminalStructure[T]) Coalesce() error {
 	var err error
 	e.collapseOnce.Do(func() {
 		v := e.getViper()
@@ -43,14 +43,14 @@ func (e *Structure[T]) Coalesce() error {
 	return err
 }
 
-func (e *Structure[T]) Collapse() T {
+func (e *LiminalStructure[T]) Collapse() T {
 	if err := e.Coalesce(); err != nil {
 		log.Fatalf("Fatal: Failed to Collapse ether: %v", err)
 	}
 	return e.Constants
 }
 
-func (e *Structure[T]) MergeFromFile(filenames ...string) {
+func (e *LiminalStructure[T]) MergeFromFile(filenames ...string) {
 	v := e.getViper()
 	// 1. look for addition environment file
 	for _, filename := range filenames {
@@ -59,7 +59,7 @@ func (e *Structure[T]) MergeFromFile(filenames ...string) {
 	}
 }
 
-func (e *Structure[T]) MergeFromCmd(cmd *cobra.Command) {
+func (e *LiminalStructure[T]) MergeFromCmd(cmd *cobra.Command) {
 	v := e.getViper()
 	keyMap := GetConstantsKeyMap(e.Constants)
 	for key, constantTag := range keyMap {
@@ -133,11 +133,11 @@ func SetupEnvironmentStructures(v *viper.Viper, keyMap map[string]ConstantTag) {
 	v.AutomaticEnv()
 }
 
-func RegisterEther(e Liminal) {
+func RegisterLiminalStructure(e Liminal) {
 	knownEthers = append(knownEthers, e)
 }
 
-func CollapseKnownEthers(cmdSource *cobra.Command, source ...string) error {
+func CollapseRegisteredStructures(cmdSource *cobra.Command, source ...string) error {
 	for _, e := range knownEthers {
 		e.MergeFromFile(source...)
 		if cmdSource != nil {

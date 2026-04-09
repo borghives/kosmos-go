@@ -5,7 +5,7 @@ type Constants struct {
 	ProxyAddress string `mapstructure:"ALL_PROXY" cmdflag:",permeate"`
 }
 
-var UniversalConstants Structure[Constants]
+var UniversalConstants LiminalStructure[Constants]
 
 func CollapseUniversalConstants() Constants {
 	return UniversalConstants.Collapse()

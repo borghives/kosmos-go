@@ -7,12 +7,12 @@ type MongoConstants struct {
 	Database   string `mapstructure:"MONGODB_DATABASE" cmdflag:"database,permeate" `
 }
 
-var MongoDataverseConstants Structure[MongoConstants]
+var MongoDataverseConstants LiminalStructure[MongoConstants]
 
 func CollapseDataverseConstants() MongoConstants {
 	return MongoDataverseConstants.Collapse()
 }
 
 func init() {
-	RegisterEther(&MongoDataverseConstants)
+	RegisterLiminalStructure(&MongoDataverseConstants)
 }

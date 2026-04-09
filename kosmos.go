@@ -23,7 +23,7 @@ func IgniteBase(cmdSource *cobra.Command, source ...string) {
 		}
 	}
 
-	if err := ether.CollapseKnownEthers(cmdSource, source...); err != nil {
+	if err := ether.CollapseRegisteredStructures(cmdSource, source...); err != nil {
 		log.Fatalf("Fatal: Failed to collapse known ethers: %v", err)
 	}
 
@@ -45,7 +45,7 @@ func Ignite(cmdSource *cobra.Command, source ...string) {
 		log.Fatalf("Fatal: Failed to load secrets file: %v", err)
 	}
 
-	if err := ether.CollapseKnownEthers(cmdSource, source...); err != nil {
+	if err := ether.CollapseRegisteredStructures(cmdSource, source...); err != nil {
 		log.Fatalf("Fatal: Failed to collapse known ethers: %v", err)
 	}
 
