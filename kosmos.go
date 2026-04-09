@@ -31,6 +31,10 @@ func Ignite(cmdSource *cobra.Command, source ...string) {
 	MustHaveObserverClient()
 }
 
+func IsSecretSourceFormat(s string) bool {
+	return ether.IsSecretSourceFormat(s)
+}
+
 func CollapseSecretString(s string) (string, error) {
 	return ether.CollapseSecretString(s)
 }
