@@ -5,11 +5,15 @@ import (
 
 	"github.com/borghives/kosmos-go/ether"
 	"github.com/borghives/kosmos-go/observation"
+	"github.com/spf13/cobra"
 )
 
 // Ignite the kosmos.  Failure to do so will be fatal to the application.  An application cannot exist without the kosmos.
-func Ignite(source ...string) {
+func Ignite(cmdSource *cobra.Command, source ...string) {
 	ether.UniversalConstants.MergeFromFile(source...)
+	if cmdSource != nil {
+		ether.UniversalConstants.MergeFromCmd(cmdSource)
+	}
 
 	projectId := ether.UniversalConstants.Collapse().ProjectID
 	if projectId == "" {
@@ -20,7 +24,7 @@ func Ignite(source ...string) {
 		log.Fatalf("Fatal: Failed to load secrets file: %v", err)
 	}
 
-	if err := ether.CollapseKnownEthers(source...); err != nil {
+	if err := ether.CollapseKnownEthers(cmdSource, source...); err != nil {
 		log.Fatalf("Fatal: Failed to collapse known ethers: %v", err)
 	}
 

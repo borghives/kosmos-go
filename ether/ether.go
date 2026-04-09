@@ -137,9 +137,13 @@ func RegisterEther(e Ether) {
 	knownEthers = append(knownEthers, e)
 }
 
-func CollapseKnownEthers(source ...string) error {
+func CollapseKnownEthers(cmdSource *cobra.Command, source ...string) error {
 	for _, e := range knownEthers {
 		e.MergeFromFile(source...)
+		if cmdSource != nil {
+			e.MergeFromCmd(cmdSource)
+		}
+
 		if err := e.Coalesce(); err != nil {
 			return err
 		}
