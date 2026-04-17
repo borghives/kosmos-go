@@ -8,6 +8,7 @@ import (
 	"github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // Usage Embed BaseModel to your model struct as the first field with kdb and kcol tags
@@ -81,9 +82,10 @@ func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
 	return observer.Witness(ctx, obj)
 }
 
-func MustHaveObserverClient() {
+func MustHaveObserverClient() *mongo.Client {
 	client := observation.SummonMongo(observation.PurposeAffinityObserver).Client()
 	if client == nil {
 		log.Fatalf("Observer client not initialized")
 	}
+	return client
 }
