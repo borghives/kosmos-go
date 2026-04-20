@@ -216,7 +216,7 @@ func SummonMongo(purpose PurposeAffinity) *MongoDataverse {
 func (m *MongoDataverse) Client() *mongo.Client {
 	if m.client == nil {
 		var err error
-		fmt.Printf("Connecting to MongoDB for purpose %v with URI: %v, Username: %v\n", m.purpose, m.clientOption.Hosts, m.clientOption.Auth.Username)
+		fmt.Printf("Connecting to MongoDB for purpose %v with URI: %v, Username: %v, Proxy: %v\n", m.purpose, m.clientOption.Hosts, m.clientOption.Auth.Username, ether.CollapseUniversalConstants().ProxyAddress)
 		m.client, err = m.Connect()
 		if err != nil {
 			log.Fatalf("Failed to connect to MongoDB: %v", err)
@@ -397,7 +397,7 @@ func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, e
 
 	proxyAddress := ether.CollapseUniversalConstants().ProxyAddress
 	if proxyAddress != "" {
-		log.Println("Using proxy for MongoDB: ", proxyAddress)
+		fmt.Printf("Using proxy for MongoDB: %v\n", proxyAddress)
 		proxyUrl, err := url.Parse(proxyAddress)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to parse proxy address: %v", err)
