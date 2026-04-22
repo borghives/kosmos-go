@@ -95,7 +95,7 @@ func (r *EntityDetector[T]) PullOne(ctx context.Context) (*T, error) {
 	return &results[0], nil
 }
 
-func (r *EntityDetector[T]) PullAll(ctx context.Context) ([]T, error) {
+func (r EntityDetector[T]) PullAll(ctx context.Context) ([]T, error) {
 	results, err := r.pullPipeline(ctx, Aggregation{})
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (r *EntityDetector[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r *EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*mongo.Cursor, error) {
+func (r EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*mongo.Cursor, error) {
 	dataCollection := r.DataCollection()
 
 	stages := r.stages.AppendFrom(postStages)
@@ -118,7 +118,7 @@ func (r *EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregat
 	return cursor, nil
 }
 
-func (r *EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
+func (r EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
 	cursor, err := r.RunPipeline(ctx, postStages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pull: %v", err)
