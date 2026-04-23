@@ -21,6 +21,10 @@ type TestModel struct {
 var _ observation.Detectable = TestModel{}
 var _ observation.Detectable = (*TestModel)(nil)
 
+func init() {
+	kosmos.Ignite(nil, "test.env")
+}
+
 func TestWitness(t *testing.T) {
 	m := TestModel{
 		Name: "MAGIC_Ed4",

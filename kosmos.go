@@ -29,7 +29,8 @@ func IgniteBase(cmdSource *cobra.Command, source ...string) {
 
 }
 
-// Ignite the kosmos.  Failure to do so will be fatal to the application.  An application cannot exist without the kosmos.
+// Ignite the kosmos.  A chain of events that materialize into existence an environment.
+// Failure to do so will be fatal to the application.  An application cannot exist without the kosmos.
 func Ignite(cmdSource *cobra.Command, source ...string) {
 	ether.UniversalConstants.MergeFromFile(source...)
 	if cmdSource != nil {
