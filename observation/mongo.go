@@ -136,10 +136,13 @@ func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	constants := ether.CollapseDataverseConstants()
 	switch purpose {
 	case PurposeAffinityObserver:
+		log.Printf("Using Uri from MONGODB_URI")
 		return CollapseMongoURISecret(constants.Uri)
 	case PurposeAffinityCreator:
+		log.Printf("Using CreatorUri from MONGODB_CREATOR_URI")
 		return CollapseMongoURISecret(constants.CreatorUri)
 	case PurposeAffinityAdmin:
+		log.Printf("Using AdminUri from MONGODB_ADMIN_URI")
 		return CollapseMongoURISecret(constants.AdminUri)
 	default:
 		return CollapseMongoURISecret(constants.Uri)
