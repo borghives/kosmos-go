@@ -1,6 +1,7 @@
 package observation
 
 import (
+	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -13,8 +14,8 @@ const (
 	RippleState_FromKnown                       //Previously observed
 )
 
-type Scope bson.D
 type Ripple struct {
+	ID             bson.ObjectID
 	State          RippleState
 	Expr           bson.D
 	Interstitial   map[string]any //state during the period of transition.
@@ -25,11 +26,11 @@ type Ripple struct {
 type Collapsible interface {
 	CollapseID() bson.ObjectID
 	HasID() bool
-	SelfScope() Scope //return the scope of Self.  The scope should have enough information to UNIQUELY filter itself
+	SelfScope() expression.Scope //return the scope of Self.  The scope should have enough information to UNIQUELY filter itself
 
-	//An entity must be Collapse by and observer and Decohere the interaction in order to exists in a known state.
+	//An entity must be Collapse by an observer and Decohere the interaction ripple in order to exists in a known state.
 	//A failure of Collapse AND Decohere flow will put the state of the object in an UNKNOWN / INBETWEEN state.
-	Collapse() Ripple             //return the ripple side effect after the collapse.  This will implicitly collapse the ID
+	Collapse() Ripple             //return the ripple side effect after the collapse. Once Collapse is called the model is in an INBETWEEN state
 	Decohere(ripple Ripple) error //After the collapse and interaction with environment, an entity decoheres (ripple contains materialization info)
 }
 

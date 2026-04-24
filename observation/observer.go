@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -29,7 +30,7 @@ func (r *EntityObserver[T]) Witness(ctx context.Context, object T) error {
 		return fmt.Errorf("The model could not be observed or collapse")
 	}
 
-	//NOTE!!: Early exit without reaching the object Decohere[nce] at the end will keep the object in a transitional state
+	//NOTE!!: Early exit without the object Decohere[nce] at the end will keep the object in a transitional (INBETWEEN) state
 	scope := object.SelfScope()
 
 	// if no Self filter and from an unknown state, insert as new record
@@ -42,15 +43,21 @@ func (r *EntityObserver[T]) Witness(ctx context.Context, object T) error {
 	} else {
 		// using scope to find existing record
 		// if self scope is empty, default to using ID
+
 		if len(scope) == 0 {
-			scope = Scope{kv("_id", object.CollapseID())}
+			id := ripple.ID
+			if id.IsZero() {
+				id = object.CollapseID()
+			}
+			scope = expression.CreateScope(EntityField{"_id"}.Eq(id))
 		}
 
+		scopeExpr := scope.Express(r.EntityMeta)
 		update := bson.D{kv("$set", object)}
 		update = append(update, ripple.Expr...) // add ripple affect to update
 
 		updateOption := options.UpdateOne().SetUpsert(true)
-		updateResult, err := r.DataCollection().UpdateOne(ctx, scope, update, updateOption)
+		updateResult, err := r.DataCollection().UpdateOne(ctx, scopeExpr, update, updateOption)
 		if err != nil {
 			return err
 		}

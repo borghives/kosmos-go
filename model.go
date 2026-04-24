@@ -74,7 +74,7 @@ func (e *BaseModel) Collapse() observation.Ripple {
 		return ripple
 	}
 
-	e.CollapseID() //Once ID is collapse it cannot "uncollapse".  This is one side effect of this function
+	ripple.ID = e.ID
 
 	now := time.Now()
 	ripple.Set("updated_time", now)
@@ -118,8 +118,8 @@ func (e *BaseModel) Decohere(ripple observation.Ripple) error {
 	return nil
 }
 
-func (e BaseModel) SelfScope() observation.Scope {
-	return observation.Scope{} // no scope to filter for base model
+func (e BaseModel) SelfScope() expression.Scope {
+	return expression.Scope{} // no scope to filter for base model
 }
 
 func (e BaseModel) HasID() bool {

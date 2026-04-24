@@ -73,3 +73,13 @@ func And(values bson.A) QueryOp {
 func Or(values bson.A) QueryOp {
 	return QueryOp{"$or", values}
 }
+
+func ToBSONArray(filters ...QueryFieldPredicate) bson.A {
+	exprs := make(bson.A, 0, len(filters))
+	for _, f := range filters {
+		if !f.Empty() {
+			exprs = append(exprs, f)
+		}
+	}
+	return exprs
+}

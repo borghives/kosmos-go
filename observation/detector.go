@@ -29,23 +29,13 @@ func NewEntityDetector[T Detectable]() *EntityDetector[T] {
 	}
 }
 
-func toBSONArray(filters ...expression.QueryFieldPredicate) bson.A {
-	exprs := make(bson.A, 0, len(filters))
-	for _, f := range filters {
-		if !f.Empty() {
-			exprs = append(exprs, f)
-		}
-	}
-	return exprs
-}
-
 func (r *EntityDetector[T]) Filter(filters ...expression.QueryFieldPredicate) *EntityDetector[T] {
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
 		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
 	} else {
-		exprs := toBSONArray(filters...)
+		exprs := expression.ToBSONArray(filters...)
 		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.EntityMeta.ResolveAlias).(bson.D))
 	}
 	return r
@@ -57,7 +47,7 @@ func (r *EntityDetector[T]) FilterEither(filters ...expression.QueryFieldPredica
 	} else if len(filters) == 1 {
 		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
 	} else {
-		exprs := toBSONArray(filters...)
+		exprs := expression.ToBSONArray(filters...)
 		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.EntityMeta.ResolveAlias).(bson.D))
 	}
 	return r
