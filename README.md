@@ -24,7 +24,7 @@ The top-level package that exposes the core capabilities:
 - Setting up the ambient environment via `Ignite` and `IgniteBase`.
 - The data representation layer with `kosmos.BaseModel`. Models embedded with `kosmos.BaseModel` gain database capabilities via a custom struct tag (`kosmos:"branch>collection"` or `kosmos:"collection"`).
 - **Operations:** Use commands like `kosmos.Detect`, `kosmos.Witness`, and `kosmos.All` to manipulate your data.
-- **Lifecycle:** As a model's state converges, the `Entanglement` automatically defines fields like `_id`, `updated_time`, and `created_time` under `Collapse()` events.
+- **Lifecycle:** As a model's state converges, the `BaseModel` automatically defines fields like `_id`, `updated_time`, and `created_time` under `Collapse()` events.
 
 ### `observation`
 The data connectivity layer bridging the application to MongoDB.
@@ -41,10 +41,10 @@ The foundational configuration and secrets manager.
 ## Getting Started
 
 1. Initialize your environment by calling `kosmos.Ignite` or `kosmos.IgniteBase`, which will load environment variables and secrets via the `ether` package.
-2. Initialize models by embedding `kosmos.Entanglement` as the first field and assigning the `kosmos` struct tag to map to a branch and collection.
+2. Initialize models by embedding `kosmos.BaseModel` as the first field and assigning the `kosmos` struct tag to map to a branch and collection.
 ```go
 type MyModel struct {
-    kosmos.Entanglement `bson:",inline" kosmos:"my_branch>my_collection"`
+    kosmos.BaseModel `bson:",inline" kosmos:"my_branch>my_collection"`
     Name string `bson:"name"`
 }
 ```
