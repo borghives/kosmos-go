@@ -3,8 +3,10 @@ package observation
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
+	"github.com/borghives/kosmos-go/klog"
 	"github.com/borghives/kosmos-go/meta"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -103,7 +105,8 @@ func (r EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregati
 	stages := r.stages.AppendFrom(postStages)
 	cursor, err := dataCollection.Aggregate(ctx, stages.Pipeline())
 	if err != nil {
-		return nil, fmt.Errorf("failed to aggregate %v: %v", stages.JsonString(), err)
+		slog.Debug("Failed to aggregate pipe for run", stages.Log(), klog.Err(err))
+		return nil, fmt.Errorf("failed to aggregate %v", err)
 	}
 	return cursor, nil
 }

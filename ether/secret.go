@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/user"
 	"strings"
@@ -85,7 +86,7 @@ func LoadSecretsFile(manager SecretManager, filenames ...string) error {
 	}
 
 	if loadDotenvsecretDisabled() {
-		log.Println("dotenvsecret: .envsecret loading disabled by DOTENVSECRET_DISABLED environment variable")
+		slog.Info("Secret file loading disabled by DOTENVSECRET_DISABLED environment variable")
 		return nil
 	}
 
@@ -116,14 +117,14 @@ type GCPSecretManager struct {
 
 func (m *GCPSecretManager) AccessSecret(name string, version string) (string, error) {
 	if m.ProjectID == "" {
-		return "", errors.New("Project ID is missing. Set GOOGLE_CLOUD_PROJECT or PROJECT_ID environment variable.")
+		return "", errors.New("Project ID is missing")
 	}
 
 	ctx := context.Background()
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to create secretmanager client: %w", err)
+		return "", fmt.Errorf("Failed to create secretmanager client: %w", err)
 	}
 	defer client.Close()
 
@@ -243,14 +244,14 @@ func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) (bool, error)
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
-		log.Printf("failed to create secretmanager client: %v", err)
+		slog.Debug("Failed to create secretmanager client: %v", err)
 		return false, err
 	}
 	defer client.Close()
 
 	version, err := client.GetSecretVersion(ctx, req)
 	if err != nil {
-		log.Printf("failed to get secret version: %v", err)
+		slog.Debug("failed to get secret version", slog.String("error", err.Error()))
 		return false, err
 	}
 
@@ -347,7 +348,7 @@ func loadFile(manager SecretManager, filename string) error {
 			// In python version: version_id is "latest", source_id is None by default
 			secretValue, err := manager.AccessSecret(secretName, versionID)
 			if err != nil {
-				fmt.Printf("Warning: Failed to load secret '%s' for environment variable '%s': %v\n", secretID, envVar, err)
+				slog.Error("Failed to load secret", slog.String("secretID", secretID), slog.String("env", envVar), slog.String("error", err.Error()))
 				continue
 			}
 			os.Setenv(envVar, secretValue)

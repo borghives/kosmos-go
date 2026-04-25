@@ -3,6 +3,7 @@ package observation
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -50,6 +51,10 @@ func (a Aggregation) AppendFrom(agg Aggregation) Aggregation {
 
 func (a Aggregation) Pipeline() mongo.Pipeline {
 	return a.pipeline
+}
+
+func (a Aggregation) Log() slog.Attr {
+	return slog.String("pipe", a.JsonString())
 }
 
 // mainly for debugging

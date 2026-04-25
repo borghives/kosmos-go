@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/borghives/kosmos-go/ether"
+	"github.com/borghives/kosmos-go/klog"
 	"github.com/borghives/kosmos-go/observation"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,8 @@ func IgniteBase(cmdSource *cobra.Command, source ...string) {
 		}
 	}
 
+	klog.Ignite()
+
 	if err := ether.CollapseRegisteredStructures(cmdSource, source...); err != nil {
 		log.Fatalf("Fatal: Failed to collapse known ethers: %v", err)
 	}
@@ -41,6 +44,8 @@ func Ignite(cmdSource *cobra.Command, source ...string) {
 	if projectId == "" {
 		log.Fatalf("Fatal: Failed to ignite universal constants: ProjectID")
 	}
+
+	klog.Ignite()
 
 	if err := ether.LoadSecretsFile(&ether.GCPSecretManager{ProjectID: projectId}); err != nil {
 		log.Fatalf("Fatal: Failed to load secrets file: %v", err)

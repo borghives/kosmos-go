@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/url"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/borghives/kosmos-go/ether"
+	"github.com/borghives/kosmos-go/klog"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -44,6 +46,8 @@ func (p PurposeAffinity) String() string {
 }
 
 func CollapseMongoURISecret(uri string) (string, error) {
+	slog.Debug("Parsing Mongo URI", slog.String("uri", MaskMongoURI(uri)))
+
 	if len(uri) == 0 {
 		return "", fmt.Errorf("Mongo URI is empty or not set.")
 	}
@@ -74,29 +78,29 @@ func CollapseMongoURISecret(uri string) (string, error) {
 
 	user, pass := userAuth[0], userAuth[1]
 
-	if user != "" {
-		fmt.Printf("URI user: %s\n", user)
-	}
+	slog.Debug("Parsed MongoDB URI", slog.String("user", user), slog.String("hostAndPath", hostAndPath))
 
 	// 4. Translate and Stitch
 	var err error
 	if ether.IsSecretSourceFormat(pass) {
+		slog.Debug("MongoDB URI Password is from a secret source")
 		pass, err = ether.CollapseSecretSource(pass)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("Failed to extract secret for MongoDB URI", err)
 		}
 	}
 	return fmt.Sprintf("%s://%s:%s%s", scheme, user, pass, hostAndPath), nil
 }
 
-func MaskMongoURI(uri string) (string, error) {
+func MaskMongoURI(uri string) string {
 	if len(uri) == 0 {
-		return "", fmt.Errorf("Mongo URI is empty or not set.")
+		return "[Empty URI]"
 	}
 	// 1. Isolate the scheme
 	schemeSplit := strings.SplitN(uri, "://", 2)
 	if len(schemeSplit) != 2 {
-		return "", fmt.Errorf("Mongo URI has invalid format")
+		//don't return  uri just incase it contains secrets)
+		return "[Mongo URI has invalid format (no scheme)]"
 	}
 
 	scheme, remainder := schemeSplit[0], schemeSplit[1]
@@ -106,7 +110,7 @@ func MaskMongoURI(uri string) (string, error) {
 	// but the delimiter between creds and hosts is the final '@'.
 	endOfCreds := strings.LastIndex(remainder, "@")
 	if endOfCreds == -1 {
-		return uri, nil // No credentials found no need to mask
+		return uri // No credentials found no need to mask
 	}
 
 	creds := remainder[:endOfCreds]
@@ -115,12 +119,12 @@ func MaskMongoURI(uri string) (string, error) {
 	// 3. Split User and Password
 	userAuth := strings.SplitN(creds, ":", 2)
 	if len(userAuth) < 2 {
-		return uri, nil // Only user, no password no need to mask
+		return uri // Only user, no password no need to mask
 	}
 
 	user, _ := userAuth[0], userAuth[1]
 
-	return fmt.Sprintf("%s://%s:****%s", scheme, user, hostAndPath), nil
+	return fmt.Sprintf("%s://%s:****%s", scheme, user, hostAndPath)
 }
 
 func CollapseMainDatabaseName() string {
@@ -136,15 +140,16 @@ func CollapseURIFor(purpose PurposeAffinity) (string, error) {
 	constants := ether.CollapseDataverseConstants()
 	switch purpose {
 	case PurposeAffinityObserver:
-		log.Printf("Using Uri from MONGODB_URI")
+		slog.Info("Using URI from MONGODB_URI")
 		return CollapseMongoURISecret(constants.Uri)
 	case PurposeAffinityCreator:
-		log.Printf("Using CreatorUri from MONGODB_CREATOR_URI")
+		slog.Info("Using CreatorUri from MONGODB_CREATOR_URI")
 		return CollapseMongoURISecret(constants.CreatorUri)
 	case PurposeAffinityAdmin:
-		log.Printf("Using AdminUri from MONGODB_ADMIN_URI")
+		slog.Info("Using AdminUri from MONGODB_ADMIN_URI")
 		return CollapseMongoURISecret(constants.AdminUri)
 	default:
+		slog.Info("Using Default URI from MONGODB_URI")
 		return CollapseMongoURISecret(constants.Uri)
 	}
 }
@@ -219,7 +224,7 @@ func SummonMongo(purpose PurposeAffinity) *MongoDataverse {
 func (m *MongoDataverse) Client() *mongo.Client {
 	if m.client == nil {
 		var err error
-		fmt.Printf("Connecting to MongoDB for purpose %v with URI: %v, Username: %v, Proxy: %v\n", m.purpose, m.clientOption.Hosts, m.clientOption.Auth.Username, ether.CollapseUniversalConstants().ProxyAddress)
+		slog.Info("Connecting to MongoDB", slog.String("purpose", m.purpose.String()), slog.Any("hosts", m.clientOption.Hosts), slog.String("username", m.clientOption.Auth.Username), slog.String("proxy", ether.CollapseUniversalConstants().ProxyAddress))
 		m.client, err = m.Connect()
 		if err != nil {
 			log.Fatalf("Failed to connect to MongoDB: %v", err)
@@ -400,7 +405,7 @@ func coalesceMongoOptionsFor(purpose PurposeAffinity) (*options.ClientOptions, e
 
 	proxyAddress := ether.CollapseUniversalConstants().ProxyAddress
 	if proxyAddress != "" {
-		fmt.Printf("Using proxy for MongoDB: %v\n", proxyAddress)
+		slog.Debug("Using proxy for MongoDB", slog.String("address", proxyAddress))
 		proxyUrl, err := url.Parse(proxyAddress)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to parse proxy address: %v", err)
@@ -428,7 +433,7 @@ func tryConnectMongo(clientOptions *options.ClientOptions, n int) (*mongo.Client
 			log.Printf("MongoDb Ping Success")
 			return client, nil
 		}
-		log.Printf("MongoDb Ping Failed.  Waiting for MongoDB... (attempt %d): %v", i+1, err)
+		slog.Info("MongoDb Ping Failed", slog.Int("n", i+1), klog.Err(err))
 		time.Sleep(5 * time.Second)
 	}
 
