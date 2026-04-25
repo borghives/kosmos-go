@@ -4,7 +4,7 @@
 
 ## The Microcosm Philosophy
 
-The naming strategy in `kosmos-go` treats the database as the foundational fabric of reality. Operations involve resolving probability into concrete data, observing state, and managing causal side-effects.
+The naming strategy in `kosmos-go` treats the database as foundational. 
 
 ### Foundational Terminology
 
