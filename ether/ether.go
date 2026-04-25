@@ -2,6 +2,7 @@ package ether
 
 import (
 	"log"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -39,6 +40,12 @@ func (e *LiminalStructure[T]) Coalesce() error {
 	e.collapseOnce.Do(func() {
 		v := e.getViper()
 		err = v.Unmarshal(&e.Constants)
+		keyMap := GetConstantsKeyMap(e.Constants)
+		for key, constantTag := range keyMap {
+			if constantTag.Permeate {
+				os.Setenv(key, v.GetString(key))
+			}
+		}
 	})
 	return err
 }
@@ -52,7 +59,7 @@ func (e *LiminalStructure[T]) Collapse() T {
 
 func (e *LiminalStructure[T]) MergeFromFile(filenames ...string) {
 	v := e.getViper()
-	// 1. look for addition environment file
+	// 1. look for environment files
 	for _, filename := range filenames {
 		v.SetConfigFile(filename)
 		_ = v.MergeInConfig()
@@ -94,7 +101,7 @@ func GetConstantsKeyMap[T any](constants T) map[string]ConstantTag {
 	// 1. Get the type of the generic T
 	targetType := reflect.TypeOf(constants)
 	// 2. If it's a pointer, dereference it to get the underlying struct type
-	if targetType.Kind() == reflect.Ptr {
+	if targetType.Kind() == reflect.Pointer {
 		targetType = targetType.Elem()
 	}
 	// 3. Ensure we are actually dealing with a struct
@@ -107,7 +114,7 @@ func GetConstantsKeyMap[T any](constants T) map[string]ConstantTag {
 		// 5. Get the specific tag values
 		mapstructureTag := field.Tag.Get("mapstructure")
 		cmdflagTag := field.Tag.Get("cmdflag")
-		// Do whatever you want with them! For example: Create a mapping
+		// Create a mapping
 		if mapstructureTag != "" {
 			keyMap[mapstructureTag] = ParseConstantTag(cmdflagTag)
 		}
