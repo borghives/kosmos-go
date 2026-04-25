@@ -244,7 +244,7 @@ func (m *GCPSecretManager) IsSecretStale(name string, ttlHour int) (bool, error)
 
 	client, err := secretmanager.NewClient(ctx)
 	if err != nil {
-		slog.Debug("Failed to create secretmanager client: %v", err)
+		slog.Debug("Failed to create secretmanager client: %v", slog.String("error", err.Error()))
 		return false, err
 	}
 	defer client.Close()
