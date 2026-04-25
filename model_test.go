@@ -6,7 +6,7 @@ import (
 
 	"github.com/borghives/kosmos-go"
 	km "github.com/borghives/kosmos-go"
-	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/meta"
 	"github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -49,11 +49,11 @@ func TestWitnessWithExistingID(t *testing.T) {
 	}
 }
 
-func TestFilter(t *testing.T) {
+func TestDetect(t *testing.T) {
 	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
 
 	// Create a filter matching the id
-	record := kosmos.Filter[TestModel](
+	record := kosmos.Detect[TestModel](
 		km.Fld("_id").Eq(id),
 	)
 	if record == nil {
@@ -79,11 +79,11 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestFilterPredicate(t *testing.T) {
+func TestDetectPredicate(t *testing.T) {
 	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
 
 	// Create a filter matching the id
-	record := kosmos.Filter[TestModel](
+	record := kosmos.Detect[TestModel](
 		km.Fld("_id").ID().Eq(id),
 		km.Fld("name").Str().Eq("MAGIC"),
 	)
@@ -110,14 +110,14 @@ func TestFilterPredicate(t *testing.T) {
 	}
 }
 
-func TestFilterIn(t *testing.T) {
+func TestDetectIn(t *testing.T) {
 	id, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ec")
 	id2, _ := bson.ObjectIDFromHex("69cbe858fae0ee418635e8ed")
 
 	ids := []bson.ObjectID{id, id2}
 
 	// Create a filter matching the id
-	record := kosmos.Filter[TestModel](
+	record := kosmos.Detect[TestModel](
 		km.Fld("_id").ID().In(ids...),
 	)
 	if record == nil {
@@ -143,14 +143,14 @@ func TestFilterIn(t *testing.T) {
 	}
 }
 
-func TestFilterPointer(t *testing.T) {
+func TestDetectPointer(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
-			t.Fatalf("Filterpanicked with pointer model: %v", r)
+			t.Fatalf("Detect panicked with pointer model: %v", r)
 		}
 	}()
 	// Create a filter with pointer T
-	detector := kosmos.Filter[*TestModel](
+	detector := kosmos.Detect[*TestModel](
 		km.Fld("_id").Eq(bson.NewObjectID()),
 	)
 	if detector.EntityMeta.DataName != "test_coll" {
@@ -159,7 +159,7 @@ func TestFilterPointer(t *testing.T) {
 }
 
 func TestNormalizeDocument(t *testing.T) {
-	meta := model.GetMetadata(TestModel{})
+	metadata := meta.GetMetadata(TestModel{})
 
 	// Create an expression that should trigger FieldName rewrite.
 	exprID := km.Fld("ID").Eq(123)
@@ -173,7 +173,7 @@ func TestNormalizeDocument(t *testing.T) {
 		{Key: "query", Value: bson.A{exprID, exprName}},
 	}
 
-	norm := expression.NormalizeDocument(doc, meta.ResolveAlias)
+	norm := expression.NormalizeDocument(doc, metadata.ResolveAlias)
 
 	// Check unmapped keys
 	if norm[0].Key != "ID" {
@@ -200,7 +200,7 @@ func TestNormalizeDocument(t *testing.T) {
 	}
 }
 
-func TestBaseModelCollapseID(t *testing.T) {
+func TestEntanglementCollapseID(t *testing.T) {
 	m := kosmos.BaseModel{}
 	if m.HasID() {
 		t.Error("expected new model to not be entangled")
@@ -216,13 +216,10 @@ func TestBaseModelCollapseID(t *testing.T) {
 	if m.ID != id {
 		t.Errorf("expected m.ID to be %v, got %v", id, m.ID)
 	}
-	// if m.InitialObserved().IsZero() {
-	// 	t.Error("expected InitialObserved to be set")
-	// }
 }
 
-func TestFilterOperators(t *testing.T) {
-	record := kosmos.Filter[TestModel](km.Fld("age").Gt(18)).Sort("name", false)
+func TestDetectOperators(t *testing.T) {
+	record := kosmos.Detect[TestModel](km.Fld("age").Gt(18)).Sort("name", false)
 	json := record.PipelineJSON()
 	if json == "" {
 		t.Error("expected valid pipeline json")

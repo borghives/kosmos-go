@@ -15,31 +15,41 @@ The naming strategy in `kosmos-go` treats the database as the foundational fabri
 - **Summon**: Calling forth an authoritative entity, factory, or singleton (e.g., `SummonSecretManager`, `SummonMongo`).
 - **Coalesce**: Merging unformed configuration data, environment variables, and connections into a unified single source of truth.
 - **Ether**: The ambient layer handling environment variables, configuration streams, and secrets.
-- **Observable**: Stateful structural interfaces representing objects that can be witnessed, filtered, or tracked.
+- **Detectable**: Interfaces representing objects that can be witnessed, filtered, or tracked.
 
 ## Architecture & Packages
 
 ### `kosmos`
-The top-level package that exposes the core capabilities: summoning observers and secretly collapsing strings using the ether layer.
-
-### `model`
-The data representation layer. Models embedded with `kosmos.BaseModel` gain database capabilities via custom struct tags (`kdb` for database name, `kcol` for collection name). 
-- **Operations:** Use commands like `kosmos.Filter`, `kosmos.Witness`, and `kosmos.All` to manipulate your data.
-- **Lifecycle:** As a model's state converges, the `BaseModel` automatically defines fields like `_id`, `updated_time`, and `created_time` under `Collapse()` events.
+The top-level package that exposes the core capabilities:
+- Setting up the ambient environment via `Ignite` and `IgniteBase`.
+- The data representation layer with `kosmos.BaseModel`. Models embedded with `kosmos.BaseModel` gain database capabilities via a custom struct tag (`kosmos:"branch>collection"` or `kosmos:"collection"`).
+- **Operations:** Use commands like `kosmos.Detect`, `kosmos.Witness`, and `kosmos.All` to manipulate your data.
+- **Lifecycle:** As a model's state converges, the `Entanglement` automatically defines fields like `_id`, `updated_time`, and `created_time` under `Collapse()` events.
 
 ### `observation`
 The data connectivity layer bridging the application to MongoDB.
-- **MongoObserver**: Maintains robust pooling and connections with different `PurposeAffinity` roles (e.g., `Admin`, `Creator`, `Observer`), allowing specialized access rights.
+- **EntityObserver & EntityDetector**: Used internally by `kosmos.Witness` and `kosmos.Detect` to interact with collections.
+- **MongoDataverse**: Maintains robust pooling and connections with different `PurposeAffinity` roles (e.g., `Admin`, `Creator`, `Observer`), allowing specialized access rights.
 - Supports administrative commands, proxy connections, and replica set status management.
 
 ### `ether`
 The foundational configuration and secrets manager.
-- Integrates with Google Secret Manager (`cloud.google.com/go/secretmanager`) and keychain adapters.
+- Integrates with Google Secret Manager (`cloud.google.com/go/secretmanager`) and `viper`/`cobra` for command-line flags and environment variables.
+- Uses `Liminal` interfaces to manage configuration structures securely.
 - Evaluates raw URI strings and secrets dynamically, allowing credentials to be injected transparently into connections without hardcoding.
 
 ## Getting Started
 
-1. Set up your MongoDB credentials using the `ether` package.
-2. Initialize models by embedding `kosmos.BaseModel` and assigning `kdb` and `kcol` tags.
-3. `Summon` your observers (`observation.MongoObserver`) with an intended affinity.
-4. Begin `Witness`ing and `Filter`ing reality!
+1. Initialize your environment by calling `kosmos.Ignite` or `kosmos.IgniteBase`, which will load environment variables and secrets via the `ether` package.
+2. Initialize models by embedding `kosmos.Entanglement` as the first field and assigning the `kosmos` struct tag to map to a branch and collection.
+```go
+type MyModel struct {
+    kosmos.Entanglement `bson:",inline" kosmos:"my_branch>my_collection"`
+    Name string `bson:"name"`
+}
+```
+3. Begin `Witness`ing and `Detect`ing reality!
+```go
+obj := &MyModel{Name: "Hello World"}
+err := kosmos.Witness(ctx, obj)
+```

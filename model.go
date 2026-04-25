@@ -1,16 +1,13 @@
 package kosmos
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"sync/atomic"
 	"time"
 
 	"github.com/borghives/kosmos-go/observation"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 const (
@@ -19,8 +16,8 @@ const (
 	ModelState_Material
 )
 
-// Usage Embed BaseModel to your model struct as the first field with kdb and kcol tags
-// Example: kosmos.BaseModel `bson:",inline" kdb:"pieriansea" kcol:"page"`
+// Usage Embed BaseModel to your model struct as the first field with a kosmos tag
+// Example: kosmos.BaseModel `bson:",inline" kosmos:"pieriansea>page"`
 type BaseModel struct {
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
@@ -132,29 +129,4 @@ func (e BaseModel) GetID() bson.ObjectID {
 
 func (e BaseModel) LastObserved() time.Time {
 	return e.UpdatedTime
-}
-
-func Fld(name string) observation.EntityField {
-	return observation.EntityField{Name: name}
-}
-
-func Filter[T observation.Detectable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
-	return All[T]().Filter(filters...)
-}
-
-func All[T observation.Detectable]() *observation.EntityDetector[T] {
-	return observation.NewEntityDetector[T]()
-}
-
-func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
-	observer := observation.NewEntityObserver[C]()
-	return observer.Witness(ctx, obj)
-}
-
-func MustHaveObserverClient() *mongo.Client {
-	client := observation.SummonMongo(observation.PurposeAffinityObserver).Client()
-	if client == nil {
-		log.Fatalf("Observer client not initialized")
-	}
-	return client
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/meta"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -25,7 +25,7 @@ type EntityDetector[T Detectable] struct {
 func NewEntityDetector[T Detectable]() *EntityDetector[T] {
 	var template T
 	return &EntityDetector[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: model.GetMetadata(template)},
+		EntityDataverse: EntityDataverse{EntityMeta: meta.GetMetadata(template)},
 	}
 }
 

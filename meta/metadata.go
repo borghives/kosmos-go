@@ -1,4 +1,4 @@
-package model
+package meta
 
 import (
 	"log"
@@ -25,14 +25,14 @@ func (e *Metadata) ResolveAlias(name string) string {
 func GetMetadata(obj any) Metadata {
 	t := reflect.TypeOf(obj)
 	if t == nil {
-		log.Fatal("model.GetMetadata: cannot extract metadata from a nil interface")
+		log.Fatal("meta.GetMetadata: cannot extract metadata from a nil interface")
 	}
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	field, found := t.FieldByName("BaseModel")
 	if !found {
-		log.Fatal("model.GetMetadata: BaseModel not found")
+		log.Fatal("meta.GetMetadata: BaseModel not found")
 	}
 
 	fieldMap := make(map[string]string)
@@ -52,7 +52,7 @@ func GetMetadata(obj any) Metadata {
 			branchName = dataParts[0]
 			dataName = dataParts[1]
 		} else {
-			log.Fatalf("model.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
+			log.Fatalf("meta.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
 		}
 	}
 

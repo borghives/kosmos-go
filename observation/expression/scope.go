@@ -1,7 +1,7 @@
 package expression
 
 import (
-	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/meta"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -11,7 +11,7 @@ func CreateScope(filters ...QueryFieldPredicate) Scope {
 	return Scope(filters)
 }
 
-func (s Scope) Express(objMeta model.Metadata) bson.D {
+func (s Scope) Express(objMeta meta.Metadata) bson.D {
 	if len(s) == 0 {
 		return bson.D{}
 	} else if len(s) == 1 {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/borghives/kosmos-go/model"
+	"github.com/borghives/kosmos-go/meta"
 	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -19,7 +19,7 @@ type EntityObserver[T Collapsible] struct {
 func NewEntityObserver[T Collapsible]() *EntityObserver[T] {
 	var template T
 	return &EntityObserver[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: model.GetMetadata(template)},
+		EntityDataverse: EntityDataverse{EntityMeta: meta.GetMetadata(template)},
 	}
 }
 
