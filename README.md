@@ -8,7 +8,7 @@ The naming strategy in `kosmos-go` treats the database as foundational.
 
 ### Foundational Terminology
 
-- **Collapse / Collapsable**: The transition from potential to actual state. Used for resolving database IDs, establishing timestamps, and pulling secrets into tangible values.
+- **Collapse / Collapsable**: The transition from potential to actual state. Used for resolving entity IDs, establishing timestamps, and pulling secrets into tangible values.
 - **Witness / Observer**: The act of fixing an entity's state into empirical reality. An `Observer` interacts with MongoDB, and to `Witness` means to persist a specific state.
 - **Ripple**: Causal side-effects extending outwards from an event (used for defining hooks or secondary reactive operations alongside a `Witness` or `Collapse`).
 - **Entangled**: A state of being linked to the fabric of reality (i.e., whether an entity currently exists with an ID in the database).
