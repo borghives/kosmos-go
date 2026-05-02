@@ -5,7 +5,8 @@ import (
 
 	"github.com/borghives/kosmos-go/ether"
 	"github.com/borghives/kosmos-go/klog"
-	"github.com/borghives/kosmos-go/observation"
+	"github.com/borghives/kosmos-go/matter"
+
 	"github.com/spf13/cobra"
 )
 
@@ -70,6 +71,6 @@ func SummonSecretManager() ether.SecretManager {
 	return ether.SummonSecretManager()
 }
 
-func SummonObservationFor(purpose observation.PurposeAffinity) *observation.MongoDataverse {
-	return observation.SummonMongo(purpose)
+func SummonObservationFor(purpose matter.PurposeAffinity) *matter.MongoDataverse {
+	return matter.SummonMongo(purpose)
 }

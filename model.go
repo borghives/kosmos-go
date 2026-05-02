@@ -5,8 +5,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/borghives/kosmos-go/observation"
-	"github.com/borghives/kosmos-go/observation/expression"
+	"github.com/borghives/kosmos-go/matter"
+	"github.com/borghives/kosmos-go/matter/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -33,17 +33,17 @@ func (e *BaseModel) CollapseID() bson.ObjectID {
 	return e.ID
 }
 
-func (e *BaseModel) createRipple() observation.Ripple {
+func (e *BaseModel) createRipple() matter.Ripple {
 	curr := atomic.LoadInt32(&e.state)
 	if curr == ModelState_Unset {
 		// Unset -> Transition
 		if atomic.CompareAndSwapInt32(&e.state, ModelState_Unset, ModelState_Transition) {
-			state := observation.RippleState_FromUnknown
+			state := matter.RippleState_FromUnknown
 			if e.HasID() {
-				state = observation.RippleState_FromKnown
+				state = matter.RippleState_FromKnown
 			}
 
-			return observation.Ripple{
+			return matter.Ripple{
 				State: state,
 			}
 		}
@@ -52,22 +52,22 @@ func (e *BaseModel) createRipple() observation.Ripple {
 	if curr == ModelState_Material {
 		// Material -> Transition
 		if atomic.CompareAndSwapInt32(&e.state, ModelState_Material, ModelState_Transition) {
-			return observation.Ripple{
-				State: observation.RippleState_FromKnown,
+			return matter.Ripple{
+				State: matter.RippleState_FromKnown,
 			}
 		}
 	}
 
-	return observation.Ripple{
-		State: observation.RippleState_Unobservable, //A model is unobservable in transition state
+	return matter.Ripple{
+		State: matter.RippleState_Unobservable, //A model is unobservable in transition state
 	}
 }
 
-func (e *BaseModel) Collapse() observation.Ripple {
+func (e *BaseModel) Collapse() matter.Ripple {
 	ripple := e.createRipple()
 
 	// return early here if model unobservable
-	if ripple.State == observation.RippleState_Unobservable {
+	if ripple.State == matter.RippleState_Unobservable {
 		return ripple
 	}
 
@@ -80,10 +80,10 @@ func (e *BaseModel) Collapse() observation.Ripple {
 	return *ripple.OnInsertRipple("created_time", now)
 }
 
-func (e *BaseModel) Decohere(ripple observation.Ripple) error {
+func (e *BaseModel) Decohere(ripple matter.Ripple) error {
 	//Do Nothing on an unobservable ripple.  We should not be here Decohering an unobservable ripple.
-	if ripple.State == observation.RippleState_Unobservable {
-		return fmt.Errorf("Failed Decoherence: ripple unobservable.")
+	if ripple.State == matter.RippleState_Unobservable {
+		return fmt.Errorf("Failed Decoherence: ripple state is unobservable.")
 	}
 
 	//Materialize the Model

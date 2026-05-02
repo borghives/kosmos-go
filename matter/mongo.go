@@ -1,4 +1,4 @@
-package observation
+package matter
 
 import (
 	"context"
@@ -86,7 +86,7 @@ func CollapseMongoURISecret(uri string) (string, error) {
 		slog.Debug("MongoDB URI Password is from a secret source")
 		pass, err = ether.CollapseSecretSource(pass)
 		if err != nil {
-			return "", fmt.Errorf("Failed to extract secret for MongoDB URI", err)
+			return "", fmt.Errorf("Failed to extract secret for MongoDB URI %v", err)
 		}
 	}
 	return fmt.Sprintf("%s://%s:%s%s", scheme, user, pass, hostAndPath), nil

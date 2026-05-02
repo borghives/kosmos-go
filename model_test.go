@@ -6,9 +6,9 @@ import (
 
 	"github.com/borghives/kosmos-go"
 	km "github.com/borghives/kosmos-go"
+	"github.com/borghives/kosmos-go/matter"
+	"github.com/borghives/kosmos-go/matter/expression"
 	"github.com/borghives/kosmos-go/meta"
-	"github.com/borghives/kosmos-go/observation"
-	"github.com/borghives/kosmos-go/observation/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -18,8 +18,8 @@ type TestModel struct {
 }
 
 // Ensure TestModel (value) and *TestModel both satisfy Observable
-var _ observation.Detectable = TestModel{}
-var _ observation.Detectable = (*TestModel)(nil)
+var _ matter.Detectable = TestModel{}
+var _ matter.Detectable = (*TestModel)(nil)
 
 func init() {
 	kosmos.Ignite(nil, "test.env")

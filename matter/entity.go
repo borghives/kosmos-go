@@ -1,4 +1,4 @@
-package observation
+package matter
 
 import (
 	"github.com/borghives/kosmos-go/meta"

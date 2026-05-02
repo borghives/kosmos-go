@@ -4,30 +4,30 @@ import (
 	"context"
 	"log"
 
-	"github.com/borghives/kosmos-go/observation"
-	"github.com/borghives/kosmos-go/observation/expression"
+	"github.com/borghives/kosmos-go/matter"
+	"github.com/borghives/kosmos-go/matter/expression"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func Fld(name string) observation.EntityField {
-	return observation.EntityField{Name: name}
+func Fld(name string) matter.EntityField {
+	return matter.EntityField{Name: name}
 }
 
-func All[T observation.Detectable]() *observation.EntityDetector[T] {
-	return observation.NewEntityDetector[T]()
+func All[T matter.Detectable]() *matter.EntityDetector[T] {
+	return matter.NewEntityDetector[T]()
 }
 
-func Detect[T observation.Detectable](filters ...expression.QueryFieldPredicate) *observation.EntityDetector[T] {
+func Detect[T matter.Detectable](filters ...expression.QueryFieldPredicate) *matter.EntityDetector[T] {
 	return All[T]().Filter(filters...)
 }
 
-func Witness[C observation.Collapsible](ctx context.Context, obj C) error {
-	observer := observation.NewEntityObserver[C]()
+func Witness[C matter.Collapsible](ctx context.Context, obj C) error {
+	observer := matter.NewEntityObserver[C]()
 	return observer.Witness(ctx, obj)
 }
 
 func MustHaveObserverClient() *mongo.Client {
-	client := observation.SummonMongo(observation.PurposeAffinityObserver).Client()
+	client := matter.SummonMongo(matter.PurposeAffinityObserver).Client()
 	if client == nil {
 		log.Fatalf("Observer client not initialized")
 	}
