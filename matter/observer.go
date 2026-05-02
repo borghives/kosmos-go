@@ -10,20 +10,20 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// An Observer witness/memorize information
+// An Observer record information
 
-type EntityObserver[T Collapsible] struct {
-	EntityDataverse
+type Observer[T Collapsible] struct {
+	Dataverse
 }
 
-func NewEntityObserver[T Collapsible]() *EntityObserver[T] {
+func NewObserver[T Collapsible]() *Observer[T] {
 	var template T
-	return &EntityObserver[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: meta.GetMetadata(template)},
+	return &Observer[T]{
+		Dataverse: Dataverse{EntityMeta: meta.GetMetadata(template)},
 	}
 }
 
-func (r *EntityObserver[T]) Witness(ctx context.Context, object T) error {
+func (r *Observer[T]) Record(ctx context.Context, object T) error {
 
 	ripple := object.Collapse() //after a collapse the object will be in a transitional state and the ID is materialized
 	if ripple.State == RippleState_Unobservable {
@@ -31,9 +31,9 @@ func (r *EntityObserver[T]) Witness(ctx context.Context, object T) error {
 	}
 
 	//NOTE!!: Early exit without the object Decohere[nce] at the end will keep the object in a transitional (INBETWEEN) state
-	scope := object.SelfScope()
 
 	// if no Self filter and from an unknown state, insert as new record
+	scope := object.SelfScope()
 	if len(scope) == 0 && ripple.State == RippleState_FromUnknown {
 		insertResult, err := r.DataCollection().InsertOne(ctx, object)
 		if err != nil {

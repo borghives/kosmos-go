@@ -13,17 +13,17 @@ func Fld(name string) matter.EntityField {
 	return matter.EntityField{Name: name}
 }
 
-func All[T matter.Detectable]() *matter.EntityDetector[T] {
-	return matter.NewEntityDetector[T]()
+func All[T matter.Detectable]() *matter.Detector[T] {
+	return matter.NewDetector[T]()
 }
 
-func Detect[T matter.Detectable](filters ...expression.QueryFieldPredicate) *matter.EntityDetector[T] {
+func Detect[T matter.Detectable](filters ...expression.QueryFieldPredicate) *matter.Detector[T] {
 	return All[T]().Filter(filters...)
 }
 
-func Witness[C matter.Collapsible](ctx context.Context, obj C) error {
-	observer := matter.NewEntityObserver[C]()
-	return observer.Witness(ctx, obj)
+func Record[C matter.Collapsible](ctx context.Context, obj C) error {
+	observer := matter.NewObserver[C]()
+	return observer.Record(ctx, obj)
 }
 
 func MustHaveObserverClient() *mongo.Client {

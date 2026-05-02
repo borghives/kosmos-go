@@ -19,19 +19,19 @@ type Detectable interface {
 	LastObserved() time.Time
 }
 
-type EntityDetector[T Detectable] struct {
-	EntityDataverse
+type Detector[T Detectable] struct {
+	Dataverse
 	stages Aggregation
 }
 
-func NewEntityDetector[T Detectable]() *EntityDetector[T] {
+func NewDetector[T Detectable]() *Detector[T] {
 	var template T
-	return &EntityDetector[T]{
-		EntityDataverse: EntityDataverse{EntityMeta: meta.GetMetadata(template)},
+	return &Detector[T]{
+		Dataverse: Dataverse{EntityMeta: meta.GetMetadata(template)},
 	}
 }
 
-func (r *EntityDetector[T]) Filter(filters ...expression.QueryFieldPredicate) *EntityDetector[T] {
+func (r *Detector[T]) Filter(filters ...expression.QueryFieldPredicate) *Detector[T] {
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
@@ -43,28 +43,25 @@ func (r *EntityDetector[T]) Filter(filters ...expression.QueryFieldPredicate) *E
 	return r
 }
 
-func (r *EntityDetector[T]) FilterEither(filters ...expression.QueryFieldPredicate) *EntityDetector[T] {
-	if len(filters) == 0 {
-		return r
-	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
-	} else {
-		exprs := expression.ToBSONArray(filters...)
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.Or(exprs), r.EntityMeta.ResolveAlias).(bson.D))
+func (r *Detector[T]) FilterEither(filters ...expression.QueryFieldPredicate) *Detector[T] {
+	if len(filters) < 2 {
+		return r.Filter(filters...)
 	}
+
+	r.stages = r.stages.Match(expression.NormalizeExpression(expression.OrField(filters...), r.EntityMeta.ResolveAlias).(bson.D))
 	return r
 }
 
-func (r *EntityDetector[T]) Limit(limit int64) *EntityDetector[T] {
+func (r *Detector[T]) Limit(limit int64) *Detector[T] {
 	r.stages = r.stages.Limit(limit)
 	return r
 }
 
-func (r *EntityDetector[T]) SortLatest() *EntityDetector[T] {
+func (r *Detector[T]) SortLatest() *Detector[T] {
 	return r.Sort("updated_time", true)
 }
 
-func (r *EntityDetector[T]) Sort(field string, descending bool) *EntityDetector[T] {
+func (r *Detector[T]) Sort(field string, descending bool) *Detector[T] {
 	field = r.EntityMeta.ResolveAlias(field)
 	order := 1
 	if descending {
@@ -74,7 +71,7 @@ func (r *EntityDetector[T]) Sort(field string, descending bool) *EntityDetector[
 	return r
 }
 
-func (r *EntityDetector[T]) PullOne(ctx context.Context) (*T, error) {
+func (r *Detector[T]) PullOne(ctx context.Context) (*T, error) {
 	results, err := r.pullPipeline(ctx, Aggregation{}.Limit(1))
 	if err != nil {
 		return nil, err
@@ -87,7 +84,7 @@ func (r *EntityDetector[T]) PullOne(ctx context.Context) (*T, error) {
 	return &results[0], nil
 }
 
-func (r EntityDetector[T]) PullAll(ctx context.Context) ([]T, error) {
+func (r Detector[T]) PullAll(ctx context.Context) ([]T, error) {
 	results, err := r.pullPipeline(ctx, Aggregation{})
 	if err != nil {
 		return nil, err
@@ -95,11 +92,11 @@ func (r EntityDetector[T]) PullAll(ctx context.Context) ([]T, error) {
 	return results, nil
 }
 
-func (r *EntityDetector[T]) PipelineJSON() string {
+func (r *Detector[T]) PipelineJSON() string {
 	return r.stages.JsonString()
 }
 
-func (r EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*mongo.Cursor, error) {
+func (r Detector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*mongo.Cursor, error) {
 	dataCollection := r.DataCollection()
 
 	stages := r.stages.AppendFrom(postStages)
@@ -111,7 +108,7 @@ func (r EntityDetector[T]) RunPipeline(ctx context.Context, postStages Aggregati
 	return cursor, nil
 }
 
-func (r EntityDetector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
+func (r Detector[T]) pullPipeline(ctx context.Context, postStages Aggregation) ([]T, error) {
 	cursor, err := r.RunPipeline(ctx, postStages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pull: %v", err)

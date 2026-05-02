@@ -29,7 +29,7 @@ func TestWitness(t *testing.T) {
 	m := TestModel{
 		Name: "MAGIC_Ed4",
 	}
-	kosmos.Witness(context.Background(), &m)
+	kosmos.Record(context.Background(), &m)
 	if m.CreatedTime == nil {
 		t.Errorf("expected created time to be set")
 	}
@@ -43,7 +43,7 @@ func TestWitnessWithExistingID(t *testing.T) {
 		Name: "MAGIC_Ed5",
 	}
 	previousTime := m.CreatedTime
-	kosmos.Witness(context.Background(), &m)
+	kosmos.Record(context.Background(), &m)
 	if previousTime != nil && previousTime.Equal(*m.CreatedTime) {
 		t.Errorf("expected created time to be set")
 	}
