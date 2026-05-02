@@ -4,7 +4,7 @@
 
 ## The Microcosm Philosophy
 
-The naming strategy in `kosmos-go` treats the database as foundational. 
+The naming strategy in `kosmos-go` treats the database as foundational space for where the application exists.
 
 ### Foundational Terminology
 

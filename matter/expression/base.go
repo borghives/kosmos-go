@@ -64,14 +64,7 @@ func NormalizeExpression(expr any, resolver NameResolver) any {
 func NormalizeDocument(document bson.D, resolver NameResolver) bson.D {
 	newD := make(bson.D, 0, len(document))
 	for _, v := range document {
-		switch val := v.Value.(type) {
-		case bson.D:
-			newD = append(newD, kv(v.Key, NormalizeDocument(val, resolver)))
-		case bson.A:
-			newD = append(newD, kv(v.Key, NormalizeArray(val, resolver)))
-		default:
-			newD = append(newD, kv(v.Key, NormalizeExpression(val, resolver)))
-		}
+		newD = append(newD, kv(v.Key, NormalizeExpression(v.Value, resolver)))
 	}
 	return newD
 }
@@ -79,16 +72,7 @@ func NormalizeDocument(document bson.D, resolver NameResolver) bson.D {
 func NormalizeArray(array bson.A, resolver NameResolver) bson.A {
 	newA := make(bson.A, 0, len(array))
 	for _, v := range array {
-		switch val := v.(type) {
-		case Base:
-			newA = append(newA, NormalizeExpression(val, resolver))
-		case bson.D:
-			newA = append(newA, NormalizeDocument(val, resolver))
-		case bson.A:
-			newA = append(newA, NormalizeArray(val, resolver))
-		default:
-			newA = append(newA, v)
-		}
+		newA = append(newA, NormalizeExpression(v, resolver))
 	}
 	return newA
 }

@@ -8,7 +8,7 @@ type QueryFieldPredicate struct {
 }
 
 func (q QueryFieldPredicate) Empty() bool {
-	return q == (QueryFieldPredicate{}) // default value
+	return q.FieldName.Name == "" && q.Query.Operator == ""
 }
 
 func (q QueryFieldPredicate) ToRepr() any {
