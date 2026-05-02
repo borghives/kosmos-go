@@ -12,12 +12,5 @@ func CreateScope(filters ...QueryFieldPredicate) Scope {
 }
 
 func (s Scope) Express(objMeta meta.Metadata) bson.D {
-	if len(s) == 0 {
-		return bson.D{}
-	} else if len(s) == 1 {
-		return NormalizeExpression(s[0], objMeta.ResolveAlias).(bson.D)
-	} else {
-		exprs := ToBSONArray(s...)
-		return NormalizeExpression(And(exprs), objMeta.ResolveAlias).(bson.D)
-	}
+	return NormalizeExpression(AndField(s...), objMeta.ResolveAlias).(bson.D)
 }

@@ -88,34 +88,38 @@ func OrField(query ...QueryFieldPredicate) OrQueryFieldPredicate {
 	}
 }
 
-func (oq OrQueryFieldPredicate) Empty() bool {
-	return len(oq.Queries) == 0
-}
-
 func (oq OrQueryFieldPredicate) ToRepr() any {
-	if oq.Empty() {
+	switch len(oq.Queries) {
+	case 0:
 		return bson.D{}
+	case 1:
+		return oq.Queries[0]
+	default:
+		return Or(ToBSONArray(oq.Queries...))
 	}
-
-	arrExp := bson.A{}
-	for _, query := range oq.Queries {
-		arrExp = append(arrExp, query.ToRepr())
-	}
-
-	return Or(arrExp)
 }
 
-func (oq OrQueryFieldPredicate) Reduce(resolver NameResolver) any {
-	if oq.Empty() {
+// ***** And QUERY *******
+
+type AndQueryFieldPredicate struct {
+	Queries []QueryFieldPredicate
+}
+
+func AndField(query ...QueryFieldPredicate) AndQueryFieldPredicate {
+	return AndQueryFieldPredicate{
+		Queries: query,
+	}
+}
+
+func (oq AndQueryFieldPredicate) ToRepr() any {
+	switch len(oq.Queries) {
+	case 0:
 		return bson.D{}
+	case 1:
+		return oq.Queries[0]
+	default:
+		return And(ToBSONArray(oq.Queries...))
 	}
-
-	arrExp := bson.A{}
-	for _, query := range oq.Queries {
-		arrExp = append(arrExp, NormalizeExpression(query, resolver))
-	}
-
-	return Or(arrExp).ToRepr()
 }
 
 func ToBSONArray(filters ...QueryFieldPredicate) bson.A {
