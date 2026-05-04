@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/borghives/kosmos-go/matter"
-	"github.com/borghives/kosmos-go/matter/expression"
+	"github.com/borghives/kosmos-go/meta/expression"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
