@@ -78,7 +78,7 @@ func (e *BaseModel) Collapse() matter.Ripple {
 	ripple.Set("created_time", e.CreatedTime) // save old created time during collapse since it is unknown until after decoherence
 	e.CreatedTime = nil                       // reset created time just incase of new creation.  Will get back value after decoherence of the ripple.  In short the created time is unknown during transition state.
 	e.UpdatedTime = now
-	return *ripple.OnInsertRipple("created_time", now)
+	return *ripple.DoSetOnInsert("created_time", now)
 }
 
 func (e *BaseModel) Decohere(ripple matter.Ripple) error {

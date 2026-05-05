@@ -28,8 +28,8 @@ type Collapsible interface {
 	HasID() bool
 	SelfScope() expression.Scope //return the scope of Self.  The scope should have enough information to UNIQUELY filter itself
 
-	//An entity must be Collapse by an observer and Decohere the interaction ripple in order to exists in a known state.
-	//A failure of Collapse AND Decohere flow will put the state of the object in an UNKNOWN / INBETWEEN state.
+	//An entity must be Collapse by an observer and Decohere the interaction's ripple in order to exists in a known state.
+	//Failure to complete Collapse AND Decohere flow will put the state of the object in an UNKNOWN / INBETWEEN state.
 	Collapse() Ripple             //return the ripple side effect after the collapse. Once Collapse is called the model is in an INBETWEEN state
 	Decohere(ripple Ripple) error //After the collapse and interaction with environment, an entity decoheres (ripple contains materialization info)
 }
@@ -47,12 +47,20 @@ func (r *Ripple) Get(key string) (any, bool) {
 	return value, ok
 }
 
-func (r *Ripple) OnInsertRipple(key string, value any) *Ripple {
+func (r *Ripple) DoOperation(operation string, key string, value any) *Ripple {
 	if r.Expr == nil {
 		r.Expr = bson.D{}
 	}
-	r.Expr = append(r.Expr, kv("$setOnInsert", bson.D{kv(key, value)}))
+	r.Expr = append(r.Expr, kv(operation, bson.D{kv(key, value)}))
 	return r
+}
+
+func (r *Ripple) DoIncr(key string, value int) *Ripple {
+	return r.DoOperation("$inc", key, value)
+}
+
+func (r *Ripple) DoSetOnInsert(key string, value any) *Ripple {
+	return r.DoOperation("$setOnInsert", key, value)
 }
 
 func (r *Ripple) GetOnInsertFor(key string, defaultValue any) any {
