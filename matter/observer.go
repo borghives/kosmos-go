@@ -34,35 +34,37 @@ func (r *Observer[T]) Record(ctx context.Context, object T) error {
 
 	// if no Self filter and from an unknown state, insert as new record
 	scope := object.SelfScope()
-	if len(scope) == 0 && ripple.State == RippleState_FromUnknown {
-		insertResult, err := r.DataCollection().InsertOne(ctx, object)
-		if err != nil {
-			return err
-		}
-		ripple.InsertFeedback = insertResult
-	} else {
-		// using scope to find existing record
-		// if self scope is empty, default to using ID
+	// if len(scope) == 0 && ripple.State == RippleState_FromUnknown {
+	// 	insertResult, err := r.DataCollection().InsertOne(ctx, object)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	ripple.InsertFeedback = insertResult
+	// } else {
 
-		if len(scope) == 0 {
-			id := ripple.ID
-			if id.IsZero() {
-				id = object.CollapseID()
-			}
-			scope = expression.CreateScope(EntityField{"_id"}.Eq(id))
-		}
+	// using scope to find existing record
+	// if self scope is empty, default to using ID
 
-		scopeExpr := scope.Express(r.EntityMeta)
-		update := bson.D{kv("$set", object)}
-		update = append(update, ripple.Expr...) // add ripple affect to update
-
-		updateOption := options.UpdateOne().SetUpsert(true)
-		updateResult, err := r.DataCollection().UpdateOne(ctx, scopeExpr, update, updateOption)
-		if err != nil {
-			return err
+	if len(scope) == 0 {
+		id := ripple.ID
+		if id.IsZero() {
+			id = object.CollapseID()
 		}
-		ripple.UpdateFeedback = updateResult
+		scope = expression.CreateScope(EntityField{"_id"}.Eq(id))
 	}
+
+	scopeExpr := scope.Express(r.EntityMeta)
+	update := bson.D{kv("$set", object)}
+	update = append(update, ripple.Expr...) // add ripple affect to update
+
+	updateOption := options.UpdateOne().SetUpsert(true)
+	updateResult, err := r.DataCollection().UpdateOne(ctx, scopeExpr, update, updateOption)
+	if err != nil {
+		return err
+	}
+	ripple.UpdateFeedback = updateResult
+
+	// }
 
 	return object.Decohere(ripple)
 }
