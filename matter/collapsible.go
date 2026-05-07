@@ -59,6 +59,10 @@ func (r *Ripple) DoIncr(key string, value int) *Ripple {
 	return r.DoOperation("$inc", key, value)
 }
 
+func (r *Ripple) DoAddToSet(key string, value any) *Ripple {
+	return r.DoOperation("$addToSet", key, value)
+}
+
 func (r *Ripple) DoSetOnInsert(key string, value any) *Ripple {
 	return r.DoOperation("$setOnInsert", key, value)
 }
