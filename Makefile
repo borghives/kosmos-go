@@ -1,4 +1,4 @@
-.PHONY: all sync update tag
+.PHONY: all sync update tag clean
 
 all: 
 	@echo "Please specify a command: make init, make update, etc."
@@ -12,3 +12,6 @@ update:
 tag:
 	@uptag-patch
 	@echo $$(getorigin)@$$(gettag) > tag
+
+clean:
+	rm -f tag
