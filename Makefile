@@ -1,4 +1,4 @@
-.PHONY: all sync update tag clean
+.PHONY: all sync update tag clean commit
 
 all: 
 	@echo "Please specify a command: make init, make update, etc."
@@ -15,3 +15,6 @@ tag:
 
 clean:
 	rm -f tag
+
+commit:
+	git commit -F -m "make commit"
