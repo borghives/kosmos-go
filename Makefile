@@ -20,6 +20,6 @@ stage:
 	git add .
 
 commit:
-	gca
+	gca && git push
 
 submit: update stage commit tag 
