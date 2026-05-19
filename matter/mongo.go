@@ -2,6 +2,7 @@ package matter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -438,4 +439,14 @@ func tryConnectMongo(clientOptions *options.ClientOptions, n int) (*mongo.Client
 	}
 
 	return nil, err
+}
+
+func ExpressJsonString(a any) string {
+	// Marshal bson.A to JSON
+	jsonString, err := json.Marshal(a)
+	if err != nil {
+		return fmt.Sprintf("Error marshaling aggregation pipeline: %v", err)
+	}
+
+	return string(jsonString)
 }
