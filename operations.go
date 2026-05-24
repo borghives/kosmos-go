@@ -21,6 +21,10 @@ func Detect[T matter.Detectable](filters ...expression.QueryFieldPredicate) *mat
 	return All[T]().Filter(filters...)
 }
 
+func ProjectInto[T matter.Detectable](fields ...expression.FieldSpecification) *matter.Projector[T] {
+	return matter.NewProjector[T](fields...)
+}
+
 func Record[C matter.Collapsible](ctx context.Context, obj C) error {
 	observer := matter.NewObserver[C]()
 	return observer.Record(ctx, obj)

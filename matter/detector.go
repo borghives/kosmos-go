@@ -19,6 +19,11 @@ type Detectable interface {
 	LastObserved() time.Time
 }
 
+type DetectionOp interface {
+	OpContext() Dataverse
+	OpStages() Aggregation
+}
+
 type Detector[T Detectable] struct {
 	Dataverse
 	stages Aggregation
@@ -29,6 +34,14 @@ func NewDetector[T Detectable]() *Detector[T] {
 	return &Detector[T]{
 		Dataverse: Dataverse{EntityMeta: meta.GetMetadata(template)},
 	}
+}
+
+func (r Detector[T]) OpContext() Dataverse {
+	return r.Dataverse
+}
+
+func (r Detector[T]) OpStages() Aggregation {
+	return r.stages
 }
 
 func (r *Detector[T]) Filter(filters ...expression.QueryFieldPredicate) *Detector[T] {
@@ -50,6 +63,18 @@ func (r *Detector[T]) FilterEither(filters ...expression.QueryFieldPredicate) *D
 
 	r.stages = r.stages.Match(expression.NormalizeExpression(expression.OrField(filters...), r.EntityMeta.ResolveAlias).(bson.D))
 	return r
+}
+
+func (r *Detector[T]) GroupBy(keys ...string) *GroupDetector[T] {
+	groupKeys := bson.D{}
+	for _, key := range keys {
+		field := r.EntityMeta.ResolveAlias(key)
+		groupKeys = append(groupKeys, kv(field, "$"+field))
+	}
+	return &GroupDetector[T]{
+		Detector:  *r,
+		groupKeys: groupKeys,
+	}
 }
 
 func (r *Detector[T]) Limit(limit int64) *Detector[T] {
@@ -100,6 +125,7 @@ func (r Detector[T]) RunPipeline(ctx context.Context, postStages Aggregation) (*
 	dataCollection := r.DataCollection()
 
 	stages := r.stages.AppendFrom(postStages)
+	fmt.Printf("stage pipe: %v: %v\n", dataCollection.Name(), stages.JsonString())
 	cursor, err := dataCollection.Aggregate(ctx, stages.Pipeline())
 	if err != nil {
 		slog.Debug("Failed to aggregate pipe for run", stages.Log(), klog.Err(err))
@@ -121,4 +147,19 @@ func (r Detector[T]) pullPipeline(ctx context.Context, postStages Aggregation) (
 	}
 
 	return results, nil
+}
+
+type GroupDetector[T Detectable] struct {
+	Detector[T]
+	groupKeys bson.D
+}
+
+func (g *GroupDetector[T]) Accumulate(fields ...expression.FieldSpecification) *Detector[T] {
+	accum := expression.ReduceFieldSpecification(g.EntityMeta.ResolveAlias, fields...)
+	group := bson.D{
+		kv("_id", g.groupKeys),
+	}
+	group = append(group, accum...)
+	g.stages = g.stages.Group(group)
+	return &g.Detector
 }

@@ -1,6 +1,8 @@
 package expression
 
 import (
+	"strings"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -12,6 +14,7 @@ type Reducible interface {
 	Reduce(resolver NameResolver) any
 }
 
+// FieldName
 type FieldName struct {
 	Name string
 }
@@ -24,6 +27,29 @@ func (f FieldName) Reduce(resolver NameResolver) any {
 	return resolver(f.Name)
 }
 
+// FieldPath
+type FieldPath struct {
+	Path string
+}
+
+func (f FieldPath) ToRepr() any {
+	return "$" + f.Path
+}
+
+func (f FieldPath) Reduce(resolver NameResolver) any {
+	parts := strings.Split(f.Path, ".")
+	resolvedParts := make([]string, len(parts))
+	for i, part := range parts {
+		if part == "_id" {
+			resolvedParts[i] = "_id"
+		} else {
+			resolvedParts[i] = resolver(part)
+		}
+	}
+	return "$" + strings.Join(resolvedParts, ".")
+}
+
+// Literal
 type LiteralValue struct {
 	Value   any
 	Context FieldName

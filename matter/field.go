@@ -19,6 +19,10 @@ type EntityStringField struct {
 	EntityField
 }
 
+type EntitySpecField struct {
+	EntityField
+}
+
 func (q EntityField) wrapFieldName() expression.FieldName {
 	return expression.FieldName{Name: q.Name}
 }
@@ -130,6 +134,10 @@ func (q EntityField) Str() EntityStringField {
 	return EntityStringField{EntityField: q}
 }
 
+func (q EntityField) With() EntitySpecField {
+	return EntitySpecField{EntityField: q}
+}
+
 // --- Entity ID Field ---
 func (q EntityIDField) In(values ...bson.ObjectID) expression.QueryFieldPredicate {
 	return q.ToQueryPredicate(expression.In(q.literalSlice(values)))
@@ -163,4 +171,38 @@ func (q EntityStringField) literalSlice(values []string) bson.A {
 		literals[i] = q.literal(v)
 	}
 	return literals
+}
+
+// --- Entity Spec Field ---
+
+func (q EntitySpecField) GroupKey(key string) expression.FieldSpecification {
+	return q.Field("_id." + key)
+}
+
+func (q EntitySpecField) Field(name string) expression.FieldSpecification {
+	return expression.FieldSpecification{
+		FieldName:  q.wrapFieldName(),
+		Expression: expression.FieldPath{Path: name},
+	}
+}
+
+func (q EntitySpecField) One() expression.FieldSpecification {
+	return expression.FieldSpecification{
+		FieldName:  q.wrapFieldName(),
+		Expression: expression.LiteralValue{Value: 1},
+	}
+}
+
+func (q EntitySpecField) Out() expression.FieldSpecification {
+	return expression.FieldSpecification{
+		FieldName:  q.wrapFieldName(),
+		Expression: expression.LiteralValue{Value: 0},
+	}
+}
+
+func (q EntitySpecField) Sum(n any) expression.FieldSpecification {
+	return expression.FieldSpecification{
+		FieldName:  q.wrapFieldName(),
+		Expression: expression.Sum(n),
+	}
 }

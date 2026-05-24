@@ -233,3 +233,79 @@ func TestDetectOperators(t *testing.T) {
 	km.Fld("status").In("active", "pending")
 	km.Fld("status").Nin("banned")
 }
+
+type PageStat struct {
+	km.BaseModel `bson:",inline" kosmos:"page_stats"`
+	ObjID        bson.ObjectID `bson:"objid"`
+	State        string        `bson:"state"`
+	Relation     string        `bson:"relation"`
+}
+
+type RelationCount struct {
+	km.BaseModel `bson:",inline"`
+	Relation     string `bson:"relation"`
+	Count        int    `bson:"count"`
+}
+
+func TestAccumulateInto(t *testing.T) {
+	ctx := context.Background()
+
+	// Seed some PageStat records
+	objID1 := bson.NewObjectID()
+	objID2 := bson.NewObjectID()
+
+	stats := []PageStat{
+		{ObjID: objID1, State: "active", Relation: "friend"},
+		{ObjID: objID1, State: "active", Relation: "friend"},
+		{ObjID: objID1, State: "active", Relation: "enemy"},
+		{ObjID: objID1, State: "inactive", Relation: "friend"},
+		{ObjID: objID2, State: "active", Relation: "friend"},
+	}
+
+	for _, stat := range stats {
+		err := kosmos.Record(ctx, &stat)
+		if err != nil {
+			t.Fatalf("failed to record PageStat: %v", err)
+		}
+	}
+
+	// Verify group-by and accumulation pipeline works
+	relationCounts, err := kosmos.ProjectInto[RelationCount](
+		km.Fld("relation").With().GroupKey("relation"),
+		km.Fld("count").With().Field("count"),
+	).From(
+		kosmos.Detect[PageStat](
+			km.Fld("objid").ID().Eq(objID1),
+			km.Fld("state").Eq("active"),
+		).GroupBy(
+			"relation",
+		).Accumulate(
+			km.Fld("count").With().Sum(1),
+		),
+	).PullAll(ctx)
+
+	if err != nil {
+		t.Fatalf("failed to PullAll relationCounts: %v", err)
+	}
+
+	// We expect ObjID1 and active state records to be grouped:
+	// - friend: 2 records
+	// - enemy: 1 record
+	// (the inactive/friend record is excluded, and objID2 is excluded)
+	if len(relationCounts) != 2 {
+		t.Errorf("expected 2 relation counts, got %d", len(relationCounts))
+	}
+
+	results := make(map[string]int)
+	for _, rc := range relationCounts {
+		results[rc.Relation] = rc.Count
+	}
+
+	if count, ok := results["friend"]; !ok || count != 2 {
+		t.Errorf("expected friend count 2, got %d (found=%t)", count, ok)
+	}
+
+	if count, ok := results["enemy"]; !ok || count != 1 {
+		t.Errorf("expected enemy count 1, got %d (found=%t)", count, ok)
+	}
+}

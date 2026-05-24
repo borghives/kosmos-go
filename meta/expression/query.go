@@ -76,6 +76,57 @@ func Or(values bson.A) QueryOp {
 	return QueryOp{"$or", values}
 }
 
+// ***** Operator *******
+
+func ToOpParamExpression(input any) any {
+	switch input := input.(type) {
+	case int:
+		return LiteralValue{Value: input}
+	case string:
+		return FieldPath{Path: input}
+	case Base:
+		return input
+	}
+	return input
+}
+
+type Op struct {
+	Operator string
+	Param    any
+}
+
+func (q Op) ToRepr() any {
+	return bson.D{kv(q.Operator, q.Param)}
+}
+
+func Sum(input any) Op {
+	return Op{
+		Operator: "$sum",
+		Param:    ToOpParamExpression(input),
+	}
+}
+
+func Avg(input any) Op {
+	return Op{
+		Operator: "$avg",
+		Param:    ToOpParamExpression(input),
+	}
+}
+
+func Min(input any) Op {
+	return Op{
+		Operator: "$min",
+		Param:    ToOpParamExpression(input),
+	}
+}
+
+func Max(input any) Op {
+	return Op{
+		Operator: "$max",
+		Param:    ToOpParamExpression(input),
+	}
+}
+
 // ***** OR QUERY *******
 
 type OrQueryFieldPredicate struct {
