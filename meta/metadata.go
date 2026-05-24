@@ -30,29 +30,29 @@ func GetMetadata(obj any) Metadata {
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
-	field, found := t.FieldByName("BaseModel")
-	if !found {
-		log.Fatal("meta.GetMetadata: BaseModel not found")
-	}
 
 	fieldMap := make(map[string]string)
 	populateFieldMap(t, fieldMap)
 
 	var dataName string
 	var branchName string
-	modelKosmosString := field.Tag.Get("kosmos")
-	kosmosParts := strings.Split(modelKosmosString, ",")
-	if len(kosmosParts) > 0 {
-		// handle dataverse and collection the first part of the kosmos string
-		dataParts := strings.Split(kosmosParts[0], ">")
 
-		if len(dataParts) == 1 {
-			dataName = dataParts[0]
-		} else if len(dataParts) == 2 {
-			branchName = dataParts[0]
-			dataName = dataParts[1]
-		} else {
-			log.Fatalf("meta.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
+	field, found := t.FieldByName("BaseModel")
+	if found {
+		modelKosmosString := field.Tag.Get("kosmos")
+		kosmosParts := strings.Split(modelKosmosString, ",")
+		if len(kosmosParts) > 0 {
+			// handle dataverse and collection the first part of the kosmos string
+			dataParts := strings.Split(kosmosParts[0], ">")
+
+			if len(dataParts) == 1 {
+				dataName = dataParts[0]
+			} else if len(dataParts) == 2 {
+				branchName = dataParts[0]
+				dataName = dataParts[1]
+			} else {
+				log.Fatalf("meta.GetMetadata: invalid kosmos data tag format: %s", kosmosParts[0])
+			}
 		}
 	}
 
