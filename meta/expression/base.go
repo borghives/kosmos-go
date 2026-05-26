@@ -51,8 +51,8 @@ func (f FieldPath) Reduce(resolver NameResolver) any {
 
 // Literal
 type LiteralValue struct {
-	Value   any
-	Context FieldName
+	Value any
+	// Context FieldName
 }
 
 func (l LiteralValue) ToRepr() any {

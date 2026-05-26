@@ -64,8 +64,7 @@ func (q EntityField) literal(value any) expression.LiteralValue {
 		value = *val
 	}
 	return expression.LiteralValue{
-		Value:   value,
-		Context: q.wrapFieldName(),
+		Value: value,
 	}
 }
 

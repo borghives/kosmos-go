@@ -73,27 +73,27 @@ func TestNormalizeExpression(t *testing.T) {
 		},
 		{
 			name:     "LiteralValue",
-			expr:     LiteralValue{Value: 42, Context: FieldName{Name: "field"}},
+			expr:     LiteralValue{Value: 42},
 			expected: 42,
 		},
 		{
-			name: "bson.A simple",
-			expr: bson.A{1, "test"},
+			name:     "bson.A simple",
+			expr:     bson.A{1, "test"},
 			expected: bson.A{1, "test"},
 		},
 		{
-			name: "bson.A with nested Reducible",
-			expr: bson.A{1, mockReducible{val: "field"}},
+			name:     "bson.A with nested Reducible",
+			expr:     bson.A{1, mockReducible{val: "field"}},
 			expected: bson.A{1, "resolved_field"},
 		},
 		{
-			name: "bson.D simple",
-			expr: bson.D{kv("key", "val")},
+			name:     "bson.D simple",
+			expr:     bson.D{kv("key", "val")},
 			expected: bson.D{kv("key", "val")},
 		},
 		{
-			name: "bson.D with nested Reducible",
-			expr: bson.D{kv("key", mockReducible{val: "field"})},
+			name:     "bson.D with nested Reducible",
+			expr:     bson.D{kv("key", mockReducible{val: "field"})},
 			expected: bson.D{kv("key", "resolved_field")},
 		},
 		{

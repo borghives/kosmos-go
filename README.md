@@ -1,21 +1,6 @@
 # Kosmos-Go
 
-**Kosmos-Go** is a Go-based framework and data persistence layer built around MongoDB. It wraps the official MongoDB Go driver (`go.mongodb.org/mongo-driver/v2`).
-
----
-
-## The Microcosm Philosophy
-
-The naming strategy in `kosmos-go` treats the database as the foundational space (the *reality*) in which the application exists. It model entity materialization as follow:
-
-- **Collapse / Collapsible**: The transition of an entity from an ephemeral state to empirical reality. When an entity is collapsed, its ID is resolved, timestamps are established, and configurations are evaluated.
-- **Record**: The act of measuring and writing an entity's state into database reality. An Observer interacts with MongoDB. To "Witness" (using `kosmos.Record`) is to commit and persist a specific state.
-- **Ripple**: Causal side-effects extending outwards from an event. It tracks operations that happen alongside a collapse (e.g., MongoDB `$setOnInsert` operations for creation timestamps, `$inc`, or `$addToSet`).
-- **Entangled**: A state of being linked to database reality (i.e., whether an entity has been persisted and assigned a valid database ID).
-- **Summon**: Materializing or calling forth a manager, connection, or client singleton (e.g., `SummonSecretManager()`, `SummonMongo()`).
-- **Coalesce**: Merging configuration sources, command-line arguments, and environment variables into a single authoritative source of truth.
-- **Ether**: The ambient layer that handles environment configuration, connection strings, and GCP Secret Manager integrations.
-- **Detectable**: The interface representing an entity that can be matched, filtered, sorted, or grouped.
+**Kosmos-Go** is a Go-based framework and data persistence layer built around MongoDB. The goal is to be the common denominator to have a consistent environment for all my services.  It wraps the official MongoDB Go driver (`go.mongodb.org/mongo-driver/v2`).
 
 ---
 
@@ -23,7 +8,7 @@ The naming strategy in `kosmos-go` treats the database as the foundational space
 
 ### `kosmos`
 The main entry-point package exposing high-level initialization, persistence, and queries:
-* **`Ignite(cmdSource, source...)` / `IgniteBase(...)`**: Bootstraps the application, loads configuration via the `ether` package, retrieves secrets, and initializes the MongoDB client.
+* **`Ignite(cmdSource, source...)` / `IgniteBase(...)`**: Bootstraps the application, loads configuration via the `ether` package, retrieves secrets, and initializes the MongoDB client.  A fail ignition will be fatal.  An service/app should not be in a partial ignition state.
 * **`BaseModel`**: The core struct that must be embedded in your data models. It manages the `ID`, `CreatedTime`, `UpdatedTime`, and state transitions (`Unset`, `Transition`, `Material`).
 * **`Record(ctx, obj)`**: The primary persistence function. It triggers `Collapse()`, writes the object to MongoDB (using `upsert: true`), and resolves the state back onto the struct via `Decohere()`.
 * **`Detect[T](filters...)`**: Starts a query/match pipeline for the specified filters.
