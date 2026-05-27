@@ -1,6 +1,6 @@
 # Kosmos-Go
 
-**Kosmos-Go** is a Go-based framework and data persistence layer built around MongoDB. The goal is to be the common denominator to have a consistent environment for all my services.  It wraps the official MongoDB Go driver (`go.mongodb.org/mongo-driver/v2`).
+**Kosmos-Go** is a Go-based framework and data persistence layer built around MongoDB. The goal is to have a expected consistent environment for all my services.  It wraps the official MongoDB Go driver (`go.mongodb.org/mongo-driver/v2`).
 
 ---
 
@@ -137,9 +137,7 @@ You can group records and accumulate counts or sums using MongoDB aggregation pi
 
 ```go
 // Target struct to project aggregation results into.
-// Note: It must embed kosmos.BaseModel to satisfy the Detectable constraint.
 type UserAgeGroup struct {
-	kosmos.BaseModel `bson:",inline"`
 	Age              int `bson:"age"`
 	Count            int `bson:"count"`
 }
