@@ -48,10 +48,10 @@ func (r *Detector[T]) Filter(filters ...expression.QueryFieldPredicate) *Detecto
 	if len(filters) == 0 {
 		return r
 	} else if len(filters) == 1 {
-		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(filters[0], r.EntityMeta.ResolveName).(bson.D))
 	} else {
 		exprs := expression.ToBSONArray(filters...)
-		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.EntityMeta.ResolveAlias).(bson.D))
+		r.stages = r.stages.Match(expression.NormalizeExpression(expression.And(exprs), r.EntityMeta.ResolveName).(bson.D))
 	}
 	return r
 }
@@ -61,14 +61,14 @@ func (r *Detector[T]) FilterEither(filters ...expression.QueryFieldPredicate) *D
 		return r.Filter(filters...)
 	}
 
-	r.stages = r.stages.Match(expression.NormalizeExpression(expression.OrField(filters...), r.EntityMeta.ResolveAlias).(bson.D))
+	r.stages = r.stages.Match(expression.NormalizeExpression(expression.OrField(filters...), r.EntityMeta.ResolveName).(bson.D))
 	return r
 }
 
 func (r *Detector[T]) GroupBy(keys ...string) *GroupDetector[T] {
 	groupKeys := bson.D{}
 	for _, key := range keys {
-		field := r.EntityMeta.ResolveAlias(key)
+		field := r.EntityMeta.ResolveName(key)
 		groupKeys = append(groupKeys, kv(field, "$"+field))
 	}
 	return &GroupDetector[T]{
@@ -87,7 +87,7 @@ func (r *Detector[T]) SortLatest() *Detector[T] {
 }
 
 func (r *Detector[T]) Sort(field string, descending bool) *Detector[T] {
-	field = r.EntityMeta.ResolveAlias(field)
+	field = r.EntityMeta.ResolveName(field)
 	order := 1
 	if descending {
 		order = -1
@@ -155,7 +155,7 @@ type GroupDetector[T Detectable] struct {
 }
 
 func (g *GroupDetector[T]) Accumulate(fields ...expression.FieldSpecification) *Detector[T] {
-	accum := expression.ReduceFieldSpecification(g.EntityMeta.ResolveAlias, fields...)
+	accum := expression.ReduceFieldSpecification(g.EntityMeta.ResolveName, fields...)
 	group := bson.D{
 		kv("_id", g.groupKeys),
 	}

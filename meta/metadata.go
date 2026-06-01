@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type Metadata struct {
+type MetaState struct {
 	DataName   string
 	BranchName string
 	FieldMap   map[string]string
 }
 
-func (e *Metadata) ResolveAlias(name string) string {
+func (e *MetaState) ResolveName(name string) string {
 	if e.FieldMap != nil {
 		if mapped, ok := e.FieldMap[name]; ok {
 			return mapped
@@ -22,7 +22,7 @@ func (e *Metadata) ResolveAlias(name string) string {
 	return name
 }
 
-func GetMetadata(obj any) Metadata {
+func GetMetadata(obj any) MetaState {
 	t := reflect.TypeOf(obj)
 	if t == nil {
 		log.Fatal("meta.GetMetadata: cannot extract metadata from a nil interface")
@@ -56,7 +56,7 @@ func GetMetadata(obj any) Metadata {
 		}
 	}
 
-	return Metadata{
+	return MetaState{
 		DataName:   dataName,
 		BranchName: branchName,
 		FieldMap:   fieldMap,

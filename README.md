@@ -9,7 +9,7 @@
 ### `kosmos`
 The main entry-point package exposing high-level initialization, persistence, and queries:
 * **`Ignite(cmdSource, source...)` / `IgniteBase(...)`**: Bootstraps the application, loads configuration via the `ether` package, retrieves secrets, and initializes the MongoDB client.  A fail ignition will be fatal.  An service/app should not be in a partial ignition state.
-* **`BaseModel`**: The core struct that must be embedded in your data models. It manages the `ID`, `CreatedTime`, `UpdatedTime`, and state transitions (`Unset`, `Transition`, `Material`).
+* **`BaseModel`**: The core struct that must be embedded in your data models. It manages the `ID`, `CreatedAt`, `UpdatedTime`, and state transitions (`Unset`, `Transition`, `Material`).
 * **`Record(ctx, obj)`**: The primary persistence function. It triggers `Collapse()`, writes the object to MongoDB (using `upsert: true`), and resolves the state back onto the struct via `Decohere()`.
 * **`Detect[T](filters...)`**: Starts a query/match pipeline for the specified filters.
 
@@ -36,9 +36,9 @@ graph TD
     C -->|Decohere| D[BaseModel: Material State]
 ```
 
-1. **Collapse**: The entity transitions from potential to actual state. An ID is generated (if missing), and fields like `created_time` and `updated_time` are staged inside a `Ripple` (using `$setOnInsert` for creation).
+1. **Collapse**: The entity transitions from potential to actual state. An ID is generated (if missing), and fields like `created_at` and `updated_time` are staged inside a `Ripple` (using `$setOnInsert` for creation).
 2. **Persistence**: The `Observer` performs an upsert.
-3. **Decohere**: The database feedback is read back into the struct. The struct transitions back to a stable state (`Material`), updating `CreatedTime` and `UpdatedTime` based on the database response.
+3. **Decohere**: The database feedback is read back into the struct. The struct transitions back to a stable state (`Material`), updating `CreatedAt` and `UpdatedTime` based on the database response.
 
 ---
 
@@ -99,7 +99,7 @@ if err != nil {
 
 // BaseModel fields are automatically populated after decoherence
 fmt.Printf("User ID: %s\n", user.ID.Hex())
-fmt.Printf("Created: %v\n", user.CreatedTime)
+fmt.Printf("Created: %v\n", user.CreatedAt)
 fmt.Printf("Updated: %v\n", user.UpdatedTime)
 ```
 

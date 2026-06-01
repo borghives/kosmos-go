@@ -30,7 +30,7 @@ func TestWitness(t *testing.T) {
 		Name: "MAGIC_Ed4",
 	}
 	kosmos.Record(context.Background(), &m)
-	if m.CreatedTime == nil {
+	if m.CreatedAt == nil {
 		t.Errorf("expected created time to be set")
 	}
 }
@@ -42,9 +42,9 @@ func TestWitnessWithExistingID(t *testing.T) {
 		},
 		Name: "MAGIC_Ed5",
 	}
-	previousTime := m.CreatedTime
+	previousTime := m.CreatedAt
 	kosmos.Record(context.Background(), &m)
-	if previousTime != nil && previousTime.Equal(*m.CreatedTime) {
+	if previousTime != nil && previousTime.Equal(*m.CreatedAt) {
 		t.Errorf("expected created time to be set")
 	}
 }
@@ -173,7 +173,7 @@ func TestNormalizeDocument(t *testing.T) {
 		{Key: "query", Value: bson.A{exprID, exprName}},
 	}
 
-	norm := expression.NormalizeDocument(doc, metadata.ResolveAlias)
+	norm := expression.NormalizeDocument(doc, metadata.ResolveName)
 
 	// Check unmapped keys
 	if norm[0].Key != "ID" {

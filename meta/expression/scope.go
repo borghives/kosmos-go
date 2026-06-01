@@ -11,6 +11,6 @@ func CreateScope(filters ...QueryFieldPredicate) Scope {
 	return Scope(filters)
 }
 
-func (s Scope) Express(objMeta meta.Metadata) bson.D {
-	return NormalizeExpression(AndField(s...), objMeta.ResolveAlias).(bson.D)
+func (s Scope) Express(objMeta meta.MetaState) bson.D {
+	return NormalizeExpression(AndField(s...), objMeta.ResolveName).(bson.D)
 }

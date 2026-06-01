@@ -6,7 +6,7 @@ import (
 )
 
 type Dataverse struct {
-	EntityMeta meta.Metadata
+	EntityMeta meta.MetaState
 }
 
 func (e *Dataverse) DataCollection() *mongo.Collection {

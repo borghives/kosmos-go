@@ -18,7 +18,7 @@ func NewProjector[T Detectable](fields ...expression.FieldSpecification) *Projec
 func (a Projector[T]) From(detector DetectionOp) *Detector[T] {
 	var template T
 	projectionEntityMeta := meta.GetMetadata(template)
-	project := expression.ReduceFieldSpecification(projectionEntityMeta.ResolveAlias, a.FieldsSpecs...)
+	project := expression.ReduceFieldSpecification(projectionEntityMeta.ResolveName, a.FieldsSpecs...)
 
 	hasID := false
 	for _, spec := range project {

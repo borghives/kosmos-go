@@ -21,7 +21,7 @@ const (
 type BaseModel struct {
 	ID          bson.ObjectID `xml:"id,attr" json:"ID" bson:"_id,omitempty"`
 	UpdatedTime time.Time     `xml:"updated" json:"updated" bson:"updated_time"`
-	CreatedTime *time.Time    `xml:"created" json:"created" bson:"created_time,omitempty"`
+	CreatedAt   *time.Time    `xml:"created" json:"created" bson:"created_at,omitempty"`
 	state       int32         `xml:"-" json:"-" bson:"-"`
 }
 
@@ -38,13 +38,13 @@ func (e *BaseModel) createRipple() matter.Ripple {
 	if curr == ModelState_Unset {
 		// Unset -> Transition
 		if atomic.CompareAndSwapInt32(&e.state, ModelState_Unset, ModelState_Transition) {
-			state := matter.RippleState_FromUnknown
+			ripple_state := matter.RippleState_FromUnknown
 			if e.HasID() {
-				state = matter.RippleState_FromKnown
+				ripple_state = matter.RippleState_FromKnown
 			}
 
 			return matter.Ripple{
-				State: state,
+				State: ripple_state,
 			}
 		}
 	}
@@ -75,10 +75,10 @@ func (e *BaseModel) Collapse() matter.Ripple {
 
 	now := time.Now()
 	ripple.Set("updated_time", now)
-	ripple.Set("created_time", e.CreatedTime) // save old created time during collapse since it is unknown until after decoherence
-	e.CreatedTime = nil                       // reset created time just incase of new creation.  Will get back value after decoherence of the ripple.  In short the created time is unknown during transition state.
+	ripple.Set("created_at", e.CreatedAt) // save old created time during collapse since it is unknown until after decoherence
+	e.CreatedAt = nil                     // reset created time just incase of new creation.  Will get back value after decoherence of the ripple.  In short the created time is unknown during transition state.
 	e.UpdatedTime = now
-	return *ripple.DoSetOnInsert("created_time", now)
+	return *ripple.DoSetOnInsert("created_at", now)
 }
 
 func (e *BaseModel) Decohere(ripple matter.Ripple) error {
@@ -91,14 +91,14 @@ func (e *BaseModel) Decohere(ripple matter.Ripple) error {
 	if atomic.CompareAndSwapInt32(&e.state, ModelState_Transition, ModelState_Material) {
 		if ripple.WasInserted() {
 			//Was observed and created as new
-			createdTime := ripple.GetOnInsertFor("created_time", time.Now()).(time.Time)
-			e.CreatedTime = &createdTime // set created time back after decoherence
+			createdTime := ripple.GetOnInsertFor("created_at", time.Now()).(time.Time)
+			e.CreatedAt = &createdTime // set created time back after decoherence
 		} else {
 			//Was observed as a previously known entity
-			//Set back the created_time saved during Collapse
-			createdTime, ok := ripple.Get("created_time")
+			//Set back the created_at saved during Collapse
+			createdTime, ok := ripple.Get("created_at")
 			if ok {
-				e.CreatedTime = createdTime.(*time.Time)
+				e.CreatedAt = createdTime.(*time.Time)
 			}
 		}
 
