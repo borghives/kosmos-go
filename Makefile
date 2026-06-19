@@ -1,4 +1,7 @@
+export GOPRIVATE=git.mypierian.com
+
 .PHONY: all sync update tag clean commit stage submit
+
 
 all: 
 	@echo "Please specify a command: make init, make update, etc."
