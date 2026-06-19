@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/borghives/kosmos-go/ether"
-	"github.com/borghives/kosmos-go/klog"
+	"git.mypierian.com/borghives/kosmos-go/ether"
+	"git.mypierian.com/borghives/kosmos-go/klog"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"

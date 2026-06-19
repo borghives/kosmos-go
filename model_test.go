@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/borghives/kosmos-go"
-	km "github.com/borghives/kosmos-go"
-	"github.com/borghives/kosmos-go/matter"
-	"github.com/borghives/kosmos-go/meta"
-	"github.com/borghives/kosmos-go/meta/expression"
+	"git.mypierian.com/borghives/kosmos-go"
+	km "git.mypierian.com/borghives/kosmos-go"
+	"git.mypierian.com/borghives/kosmos-go/matter"
+	"git.mypierian.com/borghives/kosmos-go/meta"
+	"git.mypierian.com/borghives/kosmos-go/meta/expression"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

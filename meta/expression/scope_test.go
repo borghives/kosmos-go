@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/borghives/kosmos-go/meta"
+	"git.mypierian.com/borghives/kosmos-go/meta"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

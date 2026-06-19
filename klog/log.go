@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/borghives/kosmos-go/ether"
+	"git.mypierian.com/borghives/kosmos-go/ether"
 )
 
 func Ignite() *slog.Logger {

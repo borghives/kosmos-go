@@ -54,7 +54,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/borghives/kosmos-go"
+	"git.mypierian.com/borghives/kosmos-go"
 )
 
 func main() {

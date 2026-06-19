@@ -3,9 +3,9 @@ package kosmos
 import (
 	"log"
 
-	"github.com/borghives/kosmos-go/ether"
-	"github.com/borghives/kosmos-go/klog"
-	"github.com/borghives/kosmos-go/matter"
+	"git.mypierian.com/borghives/kosmos-go/ether"
+	"git.mypierian.com/borghives/kosmos-go/klog"
+	"git.mypierian.com/borghives/kosmos-go/matter"
 
 	"github.com/spf13/cobra"
 )
